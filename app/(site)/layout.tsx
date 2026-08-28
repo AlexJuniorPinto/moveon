@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Cabecalho } from "@/components/cabecalho";
 import { Marca } from "@/components/marca";
 import { IconeInstagram, IconeWhatsapp } from "@/components/icones";
 import { telefoneLegivel } from "@/lib/formatos";
@@ -12,7 +13,7 @@ export default async function LayoutSite({ children }: { children: React.ReactNo
     : null;
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="casca flex min-h-dvh flex-col">
       <a
         href="#conteudo"
         className="sr-only rounded-[4px] bg-azul px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
@@ -27,24 +28,7 @@ export default async function LayoutSite({ children }: { children: React.ReactNo
         </p>
       )}
 
-      <header className="sticky top-0 z-40 border-b border-asfalto/10 bg-papel">
-        <div className="pagina flex h-(--altura-cabecalho) items-center justify-between gap-4">
-          <Marca />
-
-          {linkWhats && (
-            <a
-              href={linkWhats}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="acao inline-flex min-h-10 items-center gap-2 rounded-[4px] border border-asfalto/20 px-3 text-sm font-medium hover:border-asfalto hover:bg-asfalto/5"
-            >
-              <IconeWhatsapp className="size-4 text-verde-escuro" />
-              <span className="hidden sm:inline">Falar com a organização</span>
-              <span className="sm:hidden">WhatsApp</span>
-            </a>
-          )}
-        </div>
-      </header>
+      <Cabecalho linkWhats={linkWhats} />
 
       <main id="conteudo" className="flex-1">
         {children}

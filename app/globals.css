@@ -279,14 +279,23 @@
 }
 
 /* ------------------------------------------------------------------
-   Hero MoveON
-   A fotografia toma o lugar do bloco azul. O escurecimento por cima preserva
-   a profundidade da foto e mantém o texto legível.
+   Hero MoveON — hora dourada
+   A foto é de contraluz no nascer do sol. O escurecimento antigo era preto
+   chapado a 78% em cima dela e transformava o ouro em marrom; aqui o peso é
+   asfalto azulado e fica concentrado no canto de baixo à esquerda, onde o
+   texto vive. O sol continua sol: a vinheta é centrada nele, e uma camada em
+   `screen` devolve o brilho que o scrim comeria.
 ------------------------------------------------------------------- */
 .hero-moveon {
   position: relative;
   isolation: isolate;
-  min-height: min(680px, calc(100dvh - var(--altura-cabecalho)));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* O hero passa por baixo do cabeçalho: o primeiro viewport é a foto
+     inteira. O recuo de topo devolve o espaço para o conteúdo. */
+  min-height: clamp(560px, 86dvh, 760px);
+  padding-top: var(--altura-cabecalho);
   overflow: hidden;
   background-color: var(--color-asfalto);
 }
@@ -294,9 +303,15 @@
 .hero-moveon-imagem {
   z-index: -3;
   object-fit: cover;
-  object-position: center;
+  /* O sol está a ~60% da largura da foto. A moldura acompanha para a vinheta
+     e o brilho caírem no lugar certo em qualquer proporção de tela. */
+  object-position: 58% 45%;
+  filter: saturate(1.06) contrast(1.04);
 }
 
+/* Quatro scrims, nenhum preto chapado: o canto onde o texto vive, a base onde
+   a placa assenta, o topo por causa do cabeçalho transparente, e a vinheta —
+   centrada no sol, para as bordas caírem sem apagar a luz. */
 .hero-moveon::before {
   content: "";
   position: absolute;
@@ -304,13 +319,204 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(112deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.35) 47%, rgb(0 0 0 / 0.58) 100%),
-    linear-gradient(to top, rgb(0 0 0 / 0.7), transparent 48%);
+    radial-gradient(
+      125% 118% at 4% 104%,
+      rgb(9 13 22 / 0.94) 0%,
+      rgb(9 13 22 / 0.68) 30%,
+      rgb(9 13 22 / 0.18) 58%,
+      transparent 78%
+    ),
+    linear-gradient(to top, rgb(10 13 20 / 0.86) 0%, rgb(10 13 20 / 0.3) 26%, transparent 54%),
+    linear-gradient(to bottom, rgb(10 13 20 / 0.52) 0%, rgb(10 13 20 / 0.12) 13%, transparent 26%),
+    radial-gradient(118% 108% at 60% 34%, transparent 32%, rgb(6 9 14 / 0.44) 100%);
+}
+
+/* O brilho do sol, devolvido por cima do scrim. */
+.hero-moveon::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    34% 42% at 60% 32%,
+    rgb(255 178 88 / 0.3) 0%,
+    rgb(255 146 56 / 0.11) 46%,
+    transparent 74%
+  );
 }
 
 .hero-moveon .pagina {
   position: relative;
   z-index: 1;
+}
+
+/* ------------------------------------------------------------------
+   Placa de cronômetro
+   O mesmo idioma da tarja do peitoral, agora como painel de largada: a
+   contagem é a leitura do instrumento e os dados da prova ficam em colunas
+   tabulares ao lado, separadas por fio. É o que ancora o numeral, que antes
+   flutuava sozinho no meio da foto.
+------------------------------------------------------------------- */
+.placa {
+  --placa-fio: color-mix(in srgb, var(--color-papel) 17%, transparent);
+  display: grid;
+  grid-template-columns: 1fr;
+  /* Chapa física: a luz bate no topo e escorre para a base. */
+  background-image: linear-gradient(to bottom, #1a1f29, #101319);
+  border-top: 1px solid color-mix(in srgb, var(--color-papel) 22%, transparent);
+  box-shadow: 0 22px 54px -20px rgb(0 0 0 / 0.72);
+}
+
+.placa-leitura {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.85rem 1.15rem 1rem;
+}
+
+.placa-numeral {
+  font-size: clamp(3.5rem, 13vw, 6.5rem);
+}
+
+/* "hoje" é palavra, não dígito: nos 13vw do numeral ela estoura a célula. */
+.placa-numeral[data-palavra="sim"] {
+  font-size: clamp(2.5rem, 9vw, 4.25rem);
+}
+
+.placa-dados {
+  display: grid;
+  border-top: 1px solid var(--placa-fio);
+}
+
+.placa-linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.7rem 1.15rem;
+}
+
+.placa-linha + .placa-linha {
+  border-top: 1px solid var(--placa-fio);
+}
+
+@media (min-width: 640px) {
+  .placa {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .placa-leitura {
+    padding: 1rem 1.6rem 1.15rem 1.4rem;
+  }
+  .placa-dados {
+    align-content: center;
+    border-top: 0;
+    border-left: 1px solid var(--placa-fio);
+  }
+  .placa-linha {
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Cabeçalho
+   Sobre o hero e no topo da página ele sai da frente da foto — o primeiro
+   viewport é a imagem inteira, não a imagem com uma tarja clara em cima.
+   Assim que a rolagem começa, e em toda página sem hero, volta a ser papel
+   sólido com o fio de 1px.
+------------------------------------------------------------------- */
+.cabecalho {
+  background-color: var(--color-papel);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-asfalto) 10%, transparent);
+  transition:
+    background-color 240ms var(--ease-mv),
+    border-color 240ms var(--ease-mv),
+    color 240ms var(--ease-mv);
+}
+
+.casca:has(.hero-moveon) > main {
+  margin-top: calc(var(--altura-cabecalho) * -1);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] .marca-texto {
+  color: var(--color-papel);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] .marca-tarja {
+  background-color: var(--color-papel);
+  color: var(--color-asfalto);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] .botao-cabecalho {
+  color: var(--color-papel);
+  border-color: color-mix(in srgb, var(--color-papel) 36%, transparent);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] .botao-cabecalho:hover {
+  border-color: var(--color-papel);
+  background-color: color-mix(in srgb, var(--color-papel) 12%, transparent);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] .botao-cabecalho svg {
+  color: var(--color-verde);
+}
+
+.casca:has(.hero-moveon) .cabecalho[data-topo="sim"] :focus-visible {
+  outline-color: var(--color-amarelo);
+}
+
+/* ------------------------------------------------------------------
+   Fundo
+   O conceito é papel de peitoral, então o papel tem superfície: um grão fino
+   em `multiply` que aparece no claro e some no asfalto — grão de filme sobre
+   a foto, textura de impressão no resto. E a luz da hora dourada não morre no
+   corte do hero: escorre para dentro do papel, para a passagem de escuro para
+   claro não ser uma guilhotina.
+------------------------------------------------------------------- */
+body::after {
+  content: "";
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  pointer-events: none;
+  /* Alfa normal, não `multiply`: uma camada mesclada do tamanho do viewport
+     obriga o navegador a remesclar a tela inteira a cada quadro de rolagem, e
+     a 5% a diferença visual é nenhuma. */
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+.luz-papel {
+  position: relative;
+  isolation: isolate;
+}
+
+.luz-papel::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 460px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      108% 100% at 50% -6%,
+      rgb(226 168 96 / 0.2) 0%,
+      rgb(226 168 96 / 0.06) 42%,
+      transparent 68%
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-papel-sombra) 85%, transparent) 0%,
+      transparent 58%
+    );
 }
 
 /* ------------------------------------------------------------------
@@ -391,34 +597,66 @@
   }
 }
 
+/* ------------------------------------------------------------------
+   Entrada do hero — o momento autoral da página
+   Três camadas: a foto se aproxima e para (ambiente), o conteúdo sobe saindo
+   de foco (primária) e o numeral rola de trás da placa quando ela já está no
+   lugar (secundária). Acontece uma vez, no carregamento; nada fica em laço.
+------------------------------------------------------------------- */
+@keyframes hero-aproxima {
+  from {
+    transform: scale(1.07);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 @keyframes hero-entra {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px);
+    filter: blur(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
   }
 }
 
-.js .hero-conteudo > * {
-  animation: hero-entra 520ms var(--ease-saida) both;
+.js .hero-moveon-imagem {
+  animation: hero-aproxima 1700ms var(--ease-saida) both;
 }
 
-.js .hero-conteudo > *:nth-child(2) { animation-delay: 65ms; }
-.js .hero-conteudo > *:nth-child(3) { animation-delay: 130ms; }
-.js .hero-conteudo > *:nth-child(4) { animation-delay: 195ms; }
+.js .hero-conteudo > * {
+  animation: hero-entra 620ms var(--ease-saida) both;
+}
 
-.hero-moveon h1,
-.hero-moveon p,
-.hero-moveon a {
-  text-shadow: 0 2px 24px rgb(0 0 0 / 0.42);
+.js .hero-conteudo > *:nth-child(2) { animation-delay: 70ms; }
+.js .hero-conteudo > *:nth-child(3) { animation-delay: 140ms; }
+.js .hero-conteudo > *:nth-child(4) { animation-delay: 210ms; }
+
+/* O numeral só rola depois que a placa chegou ao lugar. */
+.js .hero-conteudo .mascara > * {
+  animation-delay: 230ms;
+}
+
+/* Sombra só no que fica direto sobre a foto, e curta: serve para descolar do
+   fundo, não para escurecer a imagem de novo. O botão e a placa têm ground
+   próprio e não levam sombra nenhuma. */
+.hero-titulo,
+.hero-linha {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.45);
 }
 
 @media (max-width: 640px) {
   .hero-moveon {
-    min-height: 550px;
+    min-height: clamp(540px, 84dvh, 680px);
+  }
+
+  .hero-moveon-imagem {
+    object-position: 66% 42%;
   }
 }
 
@@ -504,6 +742,9 @@
     transform: skewX(-7deg);
   }
   .js .hero-conteudo > * {
+    animation: none;
+  }
+  .js .hero-moveon-imagem {
     animation: none;
   }
   .linha-ritmo::before,

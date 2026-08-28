@@ -52,8 +52,60 @@ em que um número *é* o conteúdo, não um rótulo dele.
 ### Forma e profundidade
 
 - Raio: 4px em inputs e botões. **0px** nos cards de evento — o número de peito é reto.
-- Sombra: nenhuma. Separação por contraste de cor e linha de 1px.
+- Sombra: nenhuma no papel. Separação por contraste de cor e linha de 1px.
+  A única exceção é a placa do hero, que está apoiada sobre uma fotografia e
+  precisa parecer um objeto físico em cima dela: sombra com deslocamento e
+  desfoque de verdade, nunca um halo colorido sem offset.
 - Altura mínima de alvo de toque: 48px nos botões principais, 44px nos demais.
+
+## Hero
+
+A foto é de contraluz no nascer do sol: silhuetas, sombras longas no asfalto e
+o sol atrás do pelotão. **O tratamento existe para servir essa luz, não para
+apagá-la.** Por isso nenhuma camada é preto chapado — preto sobre ouro devolve
+marrom. Todo o escurecimento é asfalto azulado (`rgb(9 13 22)`), em quatro
+camadas com trabalhos distintos:
+
+1. Um radial ancorado no canto de baixo à esquerda, onde o texto vive. É o
+   único ponto que chega a 94% de opacidade.
+2. Uma faixa de base, para a placa e a linha de ritmo assentarem.
+3. Uma faixa de topo, porque o cabeçalho passa transparente por cima.
+4. Uma vinheta **centrada no sol** — as bordas caem, a luz fica.
+
+Por cima disso, uma camada em `mix-blend-mode: screen` devolve o brilho quente
+do sol que o scrim comeria. E o `object-position` da foto acompanha o sol
+(58%/45%, 66%/42% no mobile) para vinheta e brilho caírem no lugar em qualquer
+proporção de tela.
+
+O cabeçalho fica **transparente enquanto a página está no topo** e só então: o
+primeiro viewport é a fotografia inteira, não a fotografia com uma tarja clara
+grudada em cima. A troca é decidida pelo CSS a partir de `data-topo` — nas
+páginas sem hero ele é papel sólido em qualquer posição de rolagem.
+
+**Placa de cronômetro** (`.placa`) — o painel de largada, e a âncora do
+numeral, que antes flutuava solto no meio da foto. É a mesma tarja escura do pé
+do peitoral, agora como instrumento: a contagem é a leitura, e os dados da prova
+ficam em colunas tabulares ao lado, separadas por fio de 1px. Ela tem ground
+próprio, o que resolve a legibilidade localmente — é por isso que o `text-shadow`
+genérico que existia em todo `h1`, `p` e `a` do hero pôde ser desligado. Sobra
+uma sombra curta no título e na linha de apoio, que ficam direto sobre a foto;
+o botão e a placa não levam sombra nenhuma.
+
+## Fundo
+
+O conceito é papel de peitoral, então o papel tem superfície: um grão cinza fino
+a 5% sobre a página inteira (`body::after`, `feTurbulence` inline — nenhuma
+imagem carregada). No claro ele lê como textura de impressão; sobre o asfalto e
+a foto, como grão de filme.
+
+Alfa normal, **não** `mix-blend-mode`: uma camada mesclada do tamanho do
+viewport obriga o navegador a remesclar a tela inteira a cada quadro de
+rolagem, e a 5% a diferença visual entre as duas é nenhuma.
+
+E a luz da hora dourada não morre no corte do hero: `.luz-papel` escorre um
+clarão quente para dentro dos primeiros 460px da seção seguinte, para a
+passagem de escuro para claro não ser uma guilhotina. É luz, não cor de marca:
+não conta como uso do `amarelo`.
 
 ## Dispositivos gráficos
 
@@ -84,9 +136,24 @@ Arquétipo **enérgico**: saída rápida, chegada macia, sem quique.
 
 Onde há movimento e por quê:
 
+**O momento autoral é a abertura do hero**, e ele tem três camadas em vez de
+uma cascata solta:
+
+- *Ambiente* — a foto entra a `scale(1.07)` e chega em 1 em 1,7s de expo.out.
+  Uma aproximação que **para**: não é laço, não é Ken Burns.
+- *Primária* — os quatro blocos do conteúdo sobem 24px saindo de `blur(10px)`,
+  620ms, escalonados de 70 em 70ms.
+- *Secundária* — o numeral rola de trás da máscara aos 230ms, quando a placa
+  já chegou ao lugar. O dígito vira depois que o instrumento ligou.
+
+Onde há movimento e por quê:
+
 | Lugar | Movimento | Comunica |
 |---|---|---|
-| Contagem regressiva | Sobe de trás de uma máscara, 620ms | Dígito de cronômetro virando |
+| Foto do hero | Aproxima de 1,07 a 1 em 1,7s e para | Que a cena está viva, sem virar papel de parede animado |
+| Conteúdo do hero | Sobe 24px saindo de foco, em cascata de 70ms | Ordem de leitura, e a chegada do assunto |
+| Contagem regressiva | Sobe de trás de uma máscara, 620ms, aos 230ms | Dígito de cronômetro virando |
+| Cabeçalho | Fundo e fio aparecem em 240ms ao sair do topo | Que saímos da foto e entramos na página |
 | Vitrine | `scroll-snap` + inércia no arraste | Que dá para arrastar, e onde o card para |
 | Cards e passos | Revelam em cascata de 65ms ao entrar na tela | Ordem de leitura |
 | Card em foco | Faixa preenche de azul da esquerda, numeral avança 4px, capa cresce 3% | Que ele é clicável, e que o assunto é avançar |
@@ -98,9 +165,10 @@ A revelação em cascata depende da classe `js`, colocada no `<html>` antes da
 primeira pintura. Sem JavaScript o conteúdo aparece normalmente — nunca fica
 preso invisível.
 
-`prefers-reduced-motion` desliga a inércia, a cascata, a máscara, a linha de
-ritmo e o scroll suave; a inclinação dos numerais e a dos traços fica, porque é
-forma, não movimento.
+`prefers-reduced-motion` desliga a inércia, a cascata, a máscara, a aproximação
+da foto, a linha de ritmo e o scroll suave; a inclinação dos numerais e a dos
+traços fica, porque é forma, não movimento. A luz, o grão e a placa também
+ficam: são superfície, não animação.
 
 ## Rolagem
 
@@ -138,3 +206,5 @@ vários.
 4. Label real associado a cada input. Placeholder nunca é label.
 5. Erro embaixo do campo, em texto direto, anunciado por `role="alert"`.
 6. Nada de ilustração genérica de corredor ou foto de banco de imagem. A foto do hero é da própria organização, e o escurecimento por cima dela existe para o texto passar em AA — é contraste, não gradiente decorativo. Na capa da prova, enquanto não houver a foto real, o espaço fica reservado com o nome do evento.
+7. Escurecer foto é trabalho de luz, não de opacidade. Preto chapado sobre a hora dourada devolve marrom: o peso vem do asfalto azulado, chega concentrado onde o texto está e nunca cobre o sol por igual.
+8. Nada de rótulo em cima de título. Se o título precisa de um chapéu para se explicar, o título é que está errado.

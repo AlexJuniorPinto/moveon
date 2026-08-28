@@ -1,12 +1,13 @@
+import Link from "next/link";
 import { CardEvento } from "@/components/card-evento";
 import { Vitrine } from "@/components/vitrine";
 import { Revela } from "@/components/revela";
 import { HeroExperiencia } from "@/components/hero-experiencia";
 import { IconeSeta, IconeWhatsapp } from "@/components/icones";
 import { classesBotao } from "@/components/ui/botao";
-import { vitrine } from "@/lib/consultas";
+import { vitrine, type CartaoEvento } from "@/lib/consultas";
 import { organizadorPrincipal } from "@/lib/organizador";
-import { dataPorExtenso } from "@/lib/formatos";
+import { dataCurta, etiquetaData } from "@/lib/formatos";
 
 export const revalidate = 60;
 
@@ -27,7 +28,7 @@ export default async function Home() {
     <>
       <Hero proxima={proxima} whatsapp={organizador?.whatsapp ?? null} />
 
-      <section id="provas" className="ancora pt-12 md:pt-20">
+      <section id="provas" className="ancora luz-papel pt-14 md:pt-24">
         <div className="pagina mb-6 flex items-end justify-between gap-6">
           <div>
             <h2 className="text-xl md:text-2xl">Provas abertas</h2>
@@ -61,28 +62,32 @@ function Hero({
   proxima,
   whatsapp,
 }: {
-  proxima: { nome: string; cidade: string; uf: string; dataEvento: Date } | undefined;
+  proxima: CartaoEvento | undefined;
   whatsapp: string | null;
 }) {
   if (!proxima) {
     return (
       <HeroExperiencia>
-        <div className="pagina hero-conteudo py-16 md:py-24">
-          <h1 className="max-w-2xl text-2xl md:text-3xl">Nenhuma prova aberta agora.</h1>
-          <p className="mt-4 max-w-md text-papel/70">
-            Siga a organização para saber da próxima. Assim que uma corrida abrir, ela
-            aparece aqui.
+        <div className="pagina hero-conteudo pb-14 md:pb-20">
+          <h1 className="hero-titulo max-w-2xl text-[clamp(2rem,5vw,3.25rem)]">
+            Nenhuma prova aberta agora.
+          </h1>
+          <p className="hero-linha mt-4 max-w-md text-papel/75">
+            Assim que a organização abrir uma corrida, ela aparece aqui. Fale com a
+            equipe para saber da próxima data.
           </p>
           {whatsapp && (
-            <a
-              href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${classesBotao("avanco", "grande")} mt-8`}
-            >
-              <IconeWhatsapp className="size-5" />
-              Falar com a organização
-            </a>
+            <div className="mt-8">
+              <a
+                href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={classesBotao("avanco", "grande")}
+              >
+                <IconeWhatsapp className="size-5" />
+                Falar com a organização
+              </a>
+            </div>
           )}
         </div>
       </HeroExperiencia>
@@ -91,46 +96,71 @@ function Hero({
 
   const dias = diasAte(proxima.dataEvento);
   const urgente = dias <= 7;
+  const eHoje = dias === 0;
+  const semana = etiquetaData(proxima.dataEvento).diaSemana;
 
   return (
     <HeroExperiencia>
-      <div className="pagina hero-conteudo py-11 md:py-16">
-        <p className="rotulo text-papel/50">Próxima prova</p>
-
-        {/* O numeral sobe de trás da linha, como o dígito de um cronômetro virando. */}
-        <h1 className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-1 md:gap-x-8">
-          <span className="mascara">
-            <span
-              className={`numeral block text-[clamp(4rem,17vw,10rem)] ${
-                urgente ? "text-amarelo" : "text-papel"
-              }`}
-            >
-              {dias === 0 ? "hoje" : dias}
-            </span>
-          </span>
-          {dias > 0 && (
-            <span className="font-display text-xl font-extrabold [font-stretch:125%] md:text-2xl">
-              {dias === 1 ? "dia" : "dias"}
-            </span>
-          )}
+      <div className="pagina hero-conteudo pb-14 md:pb-20">
+        <h1 className="hero-titulo max-w-3xl text-[clamp(2.25rem,6vw,4rem)]">
+          {proxima.nome}
         </h1>
 
-        <Revela className="contents" atrasoInicial={1}>
-          <p className="mt-5 max-w-xl text-base text-papel/80 md:text-lg">
-            {dias === 0 ? "É hoje: " : dias === 1 ? "Falta um dia para a " : "Faltam para a "}
-            <strong className="font-semibold text-papel">{proxima.nome}</strong>, em{" "}
-            {proxima.cidade} · {proxima.uf}.
+        <p className="hero-linha mt-4 max-w-md text-papel/75">
+          Inscrição em um formulário só, e o pagamento você combina direto no
+          WhatsApp da organização.
+        </p>
+
+        {/* A placa de largada: a contagem é a leitura do instrumento, os dados da
+            prova são as colunas ao lado. O numeral rola de trás da máscara, como
+            o dígito de um cronômetro virando. */}
+        <div className="placa mt-8 max-w-xl">
+          <p className="placa-leitura">
+            <span className="mascara">
+              <span
+                data-palavra={eHoje ? "sim" : "nao"}
+                className={`numeral placa-numeral block ${
+                  urgente ? "text-amarelo" : "text-papel"
+                }`}
+              >
+                {eHoje ? "hoje" : dias}
+              </span>
+            </span>
+            {!eHoje && (
+              <span className={`rotulo ${urgente ? "text-amarelo" : "text-papel/60"}`}>
+                {dias === 1 ? "dia" : "dias"}
+              </span>
+            )}
           </p>
-          <p className="dados mt-2 text-sm text-papel/50 first-letter:uppercase">
-            {dataPorExtenso(proxima.dataEvento)}
-          </p>
-          <div className="mt-8">
-            <a href="#provas" className={`${classesBotao("avanco", "grande")} group`}>
-              Ver provas abertas
-              <IconeSeta className="size-4 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1" />
-            </a>
+
+          <div className="placa-dados">
+            <p className="placa-linha">
+              <span className="rotulo text-papel/60">Largada</span>
+              <span className="dados text-sm text-papel">
+                {semana} · {dataCurta(proxima.dataEvento)}
+              </span>
+            </p>
+            <p className="placa-linha">
+              <span className="rotulo text-papel/60">Onde</span>
+              <span className="dados text-sm text-papel">
+                {proxima.cidade} · {proxima.uf}
+              </span>
+            </p>
           </div>
-        </Revela>
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link
+            href={`/evento/${proxima.slug}`}
+            className={`${classesBotao("avanco", "grande")} group`}
+          >
+            Abrir a {proxima.nome}
+            <IconeSeta className="size-4 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1" />
+          </Link>
+          <a href="#provas" className={classesBotao("contorno-claro", "grande")}>
+            Ver todas as provas
+          </a>
+        </div>
       </div>
     </HeroExperiencia>
   );

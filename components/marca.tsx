@@ -17,12 +17,12 @@ export function Marca({
   const conteudo = (
     <span className="flex items-center">
       <span
-        className={`font-display text-lg leading-none font-extrabold tracking-[-0.03em] [font-stretch:125%] ${corTexto}`}
+        className={`marca-texto font-display text-lg leading-none font-extrabold tracking-[-0.03em] [font-stretch:125%] ${corTexto}`}
       >
         MOVE
       </span>
       <span
-        className={`ml-[3px] px-[5px] py-[3px] font-display text-lg leading-none font-extrabold tracking-[-0.02em] [font-stretch:125%] ${tarja}`}
+        className={`marca-tarja ml-[3px] px-[5px] py-[3px] font-display text-lg leading-none font-extrabold tracking-[-0.02em] [font-stretch:125%] ${tarja}`}
       >
         ON
       </span>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Variante = "avanco" | "estrutura" | "contorno" | "texto";
+type Variante = "avanco" | "estrutura" | "contorno" | "contorno-claro" | "texto";
 type Tamanho = "normal" | "grande";
 
 const variantes: Record<Variante, string> = {
@@ -8,6 +8,9 @@ const variantes: Record<Variante, string> = {
   avanco: "bg-verde text-asfalto hover:bg-verde-escuro border border-transparent",
   estrutura: "bg-azul text-white hover:bg-azul-escuro border border-transparent",
   contorno: "bg-transparent text-asfalto border border-asfalto/25 hover:border-asfalto hover:bg-asfalto/5",
+  // Mesmo contorno, do outro lado do contraste: sobre a foto do hero.
+  "contorno-claro":
+    "bg-transparent text-papel border border-papel/35 hover:border-papel hover:bg-papel/12",
   texto: "bg-transparent text-azul border border-transparent hover:bg-azul/8 underline underline-offset-4 decoration-1",
 };
 
