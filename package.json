@@ -13,7 +13,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:setup": "prisma migrate deploy && tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "gerar-segredo": "node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\""
+    "gerar-segredo": "node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\"",
+    "build:demo": "node scripts/build-demo.mjs"
   },
   "type": "commonjs",
   "dependencies": {

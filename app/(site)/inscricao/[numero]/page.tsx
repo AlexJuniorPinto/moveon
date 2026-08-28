@@ -14,8 +14,13 @@ import {
   telefoneMascarado,
   valorSimples,
 } from "@/lib/formatos";
+import { DEMO, DEMO_NUMERO, demoInscricao } from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
+
+export const generateStaticParams = DEMO
+  ? async () => [{ numero: DEMO_NUMERO }]
+  : undefined;
 
 export const metadata: Metadata = {
   title: "Sua inscrição",
@@ -30,7 +35,9 @@ export default async function PaginaConfirmacao({
   const { numero } = await params;
 
   const [inscricao, organizador] = await Promise.all([
-    consultaSegura(
+    DEMO
+      ? Promise.resolve(demoInscricao(decodeURIComponent(numero)))
+      : consultaSegura(
       () =>
         prisma.inscricao.findUnique({
           where: { numeroInscricao: decodeURIComponent(numero) },
@@ -109,7 +116,9 @@ export default async function PaginaConfirmacao({
           <BotaoWhatsapp numeroInscricao={inscricao.numeroInscricao} href={href} />
           <p className="mt-3 text-center text-sm text-traco">
             Sem WhatsApp neste aparelho? Chame no{" "}
-            <span className="dados text-asfalto">{telefoneLegivel(organizador!.whatsapp)}</span>.
+            <span className="dados whitespace-nowrap text-asfalto">
+              {telefoneLegivel(organizador!.whatsapp)}
+            </span>.
           </p>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { consultaSegura, prisma } from "./prisma";
+import { DEMO, DEMO_ORGANIZADOR } from "./demo";
 
 export type DadosOrganizador = {
   id: string;
@@ -15,6 +16,8 @@ export type DadosOrganizador = {
  * fase 4 abrir para vários, só esta função muda.
  */
 export const organizadorPrincipal = cache(async (): Promise<DadosOrganizador | null> => {
+  if (DEMO) return DEMO_ORGANIZADOR;
+
   return consultaSegura(
     () =>
       prisma.organizador.findFirst({

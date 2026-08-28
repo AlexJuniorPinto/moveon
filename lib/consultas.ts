@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { Evento, Lote, Modalidade } from "@prisma/client";
 import { consultaSegura, prisma } from "./prisma";
+import { DEMO, DEMO_SLUGS, demoDetalhe, demoVitrine } from "./demo";
 import {
   estadoInscricoes,
   loteVigente,
@@ -77,8 +78,10 @@ async function contagens(eventoIds: string[]) {
   return { porEvento, porLote, porModalidade } as const;
 }
 
-export const vitrine = cache(async (): Promise<CartaoEvento[]> =>
-  consultaSegura(async () => {
+export const vitrine = cache(async (): Promise<CartaoEvento[]> => {
+  if (DEMO) return demoVitrine();
+
+  return consultaSegura(async () => {
     const agora = new Date();
     const eventos = await prisma.evento.findMany({
       where: { status: "publicado", deletedAt: null, dataEvento: { gte: agora } },
@@ -111,11 +114,13 @@ export const vitrine = cache(async (): Promise<CartaoEvento[]> =>
         aberto: estado.aberto,
       } satisfies CartaoEvento;
     });
-  }, [])
-);
+  }, []);
+});
 
-export const detalheEvento = cache(async (slug: string): Promise<DetalheEvento | null> =>
-  consultaSegura(async () => {
+export const detalheEvento = cache(async (slug: string): Promise<DetalheEvento | null> => {
+  if (DEMO) return demoDetalhe(slug);
+
+  return consultaSegura(async () => {
     const agora = new Date();
     const evento = await prisma.evento.findFirst({
       where: { slug, deletedAt: null },
@@ -142,11 +147,13 @@ export const detalheEvento = cache(async (slug: string): Promise<DetalheEvento |
       ocupadas,
       estado: estadoInscricoes(evento, ocupadas, lote != null, agora),
     } satisfies DetalheEvento;
-  }, null)
-);
+  }, null);
+});
 
-export const slugsPublicados = async (): Promise<string[]> =>
-  consultaSegura(
+export const slugsPublicados = async (): Promise<string[]> => {
+  if (DEMO) return DEMO_SLUGS;
+
+  return consultaSegura(
     async () =>
       (
         await prisma.evento.findMany({
@@ -156,3 +163,4 @@ export const slugsPublicados = async (): Promise<string[]> =>
       ).map((e) => e.slug),
     []
   );
+};

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Botao } from "@/components/ui/botao";
 import { Campo, Grupo, entrada } from "@/components/ui/campos";
@@ -33,6 +34,8 @@ export type DadosFormulario = {
   modalidades: ModalidadeFormulario[];
   lote: { id: string; nome: string; precoCentavos: number };
   formasPagamento: { valor: "pix" | "dinheiro"; rotulo: string }[];
+  /** Build de demonstração: valida tudo, mas não grava nada. */
+  demo?: boolean;
 };
 
 type Valores = {
@@ -56,6 +59,8 @@ type Valores = {
 };
 
 type Erros = Partial<Record<keyof Valores, string | null>>;
+
+const DEMO_NUMERO_EXEMPLO = "MV-2026-CFO-0087";
 
 const VAZIO: Valores = {
   modalidadeId: "",
@@ -268,6 +273,18 @@ export function FormularioInscricao({ dados }: { dados: DadosFormulario }) {
 
     setEnviando(true);
     setAvisoGeral(null);
+
+    // Na demonstração não existe endpoint: o percurso segue até a confirmação
+    // de exemplo, que se identifica como tal.
+    if (dados.demo) {
+      try {
+        localStorage.removeItem(chaveRascunho);
+      } catch {
+        // ignorar
+      }
+      router.push(`/inscricao/${DEMO_NUMERO_EXEMPLO}`);
+      return;
+    }
 
     try {
       const resposta = await fetch("/api/inscricoes", {
@@ -714,14 +731,14 @@ export function FormularioInscricao({ dados }: { dados: DadosFormulario }) {
           aoMarcar={(marcado) => altera("aceiteLgpd", marcado)}
         >
           Autorizo o uso dos meus dados para organização do evento, conforme o{" "}
-          <a
+          <Link
             href="/privacidade"
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-azul underline underline-offset-2"
           >
             aviso de privacidade
-          </a>
+          </Link>
           .
         </Aceite>
       </Grupo>

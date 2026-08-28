@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CapaEvento } from "@/components/capa-evento";
@@ -296,12 +297,12 @@ function BlocoPreco({
           </p>
         )}
 
-        <a
+        <Link
           href={`/evento/${slug}/inscricao`}
           className={`${classesBotao("avanco", "grande")} mt-5 hidden w-full md:inline-flex`}
         >
           Fazer inscrição
-        </a>
+        </Link>
       </div>
     </div>
   );

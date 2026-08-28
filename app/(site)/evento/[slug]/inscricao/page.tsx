@@ -5,8 +5,15 @@ import { FormularioInscricao } from "@/components/formulario-inscricao";
 import { detalheEvento } from "@/lib/consultas";
 import { organizadorPrincipal } from "@/lib/organizador";
 import { dataCurta } from "@/lib/formatos";
+import { DEMO, DEMO_SLUGS } from "@/lib/demo";
 
+// O valor do lote é recalculado a cada acesso. (No build de demonstração o
+// scripts/build-demo.mjs troca isto por "force-static".)
 export const dynamic = "force-dynamic";
+
+export const generateStaticParams = DEMO
+  ? async () => DEMO_SLUGS.map((slug) => ({ slug }))
+  : undefined;
 
 export async function generateMetadata({
   params,
@@ -81,6 +88,7 @@ export default async function PaginaInscricao({
           })),
           lote: { id: lote.id, nome: lote.nome, precoCentavos: lote.precoCentavos },
           formasPagamento,
+          demo: DEMO,
         }}
       />
     </div>

@@ -3,6 +3,7 @@ import { Marca } from "@/components/marca";
 import { IconeInstagram, IconeWhatsapp } from "@/components/icones";
 import { telefoneLegivel } from "@/lib/formatos";
 import { organizadorPrincipal } from "@/lib/organizador";
+import { DEMO } from "@/lib/demo";
 
 export default async function LayoutSite({ children }: { children: React.ReactNode }) {
   const organizador = await organizadorPrincipal();
@@ -18,6 +19,13 @@ export default async function LayoutSite({ children }: { children: React.ReactNo
       >
         Pular para o conteúdo
       </a>
+
+      {DEMO && (
+        <p className="bg-amarelo px-4 py-2 text-center text-sm text-asfalto">
+          <strong className="font-semibold">Demonstração.</strong> As provas são de exemplo
+          e nenhuma inscrição é gravada.
+        </p>
+      )}
 
       <header className="sticky top-0 z-40 border-b border-asfalto/10 bg-papel">
         <div className="pagina flex h-(--altura-cabecalho) items-center justify-between gap-4">
@@ -85,9 +93,20 @@ export default async function LayoutSite({ children }: { children: React.ReactNo
         <div className="border-t border-papel/10">
           <div className="pagina flex flex-wrap items-center justify-between gap-2 py-5">
             <p className="rotulo text-papel/50">MoveON · inscrições em corridas de rua</p>
-            <Link href="/admin" className="rotulo acao text-papel/50 hover:text-papel">
-              Painel do organizador
-            </Link>
+            {/* O painel exige servidor: no build de demonstração ele não existe,
+                então o rodapé aponta para o guia. */}
+            {DEMO ? (
+              <a
+                href="/moveon/guia/"
+                className="rotulo acao text-papel/50 hover:text-papel"
+              >
+                Guia do organizador
+              </a>
+            ) : (
+              <Link href="/admin" className="rotulo acao text-papel/50 hover:text-papel">
+                Painel do organizador
+              </Link>
+            )}
           </div>
         </div>
       </footer>
