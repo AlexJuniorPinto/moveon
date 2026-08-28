@@ -30,8 +30,7 @@ export default async function Home() {
       <section id="provas" className="ancora pt-12 md:pt-20">
         <div className="pagina mb-6 flex items-end justify-between gap-6">
           <div>
-            <p className="rotulo rotulo-marcado text-traco">Vitrine</p>
-            <h2 className="mt-3 text-xl md:text-2xl">Provas abertas</h2>
+            <h2 className="text-xl md:text-2xl">Provas abertas</h2>
           </div>
           {eventos.length > 0 && (
             <p className="dados hidden text-sm text-traco sm:block">
@@ -69,8 +68,7 @@ function Hero({
     return (
       <HeroExperiencia>
         <div className="pagina hero-conteudo py-16 md:py-24">
-          <p className="rotulo rotulo-marcado text-papel/50">MoveON</p>
-          <h1 className="mt-4 max-w-2xl text-2xl md:text-3xl">Nenhuma prova aberta agora.</h1>
+          <h1 className="max-w-2xl text-2xl md:text-3xl">Nenhuma prova aberta agora.</h1>
           <p className="mt-4 max-w-md text-papel/70">
             Siga a organização para saber da próxima. Assim que uma corrida abrir, ela
             aparece aqui.
@@ -97,7 +95,7 @@ function Hero({
   return (
     <HeroExperiencia>
       <div className="pagina hero-conteudo py-11 md:py-16">
-        <p className="rotulo rotulo-marcado text-papel/50">Próxima prova</p>
+        <p className="rotulo text-papel/50">Próxima prova</p>
 
         {/* O numeral sobe de trás da linha, como o dígito de um cronômetro virando. */}
         <h1 className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-1 md:gap-x-8">
@@ -180,8 +178,7 @@ const PASSOS = [
 function ComoFunciona() {
   return (
     <section className="pagina pt-20 md:pt-28">
-      <p className="rotulo rotulo-marcado text-traco">Como funciona</p>
-      <h2 className="mt-3 max-w-lg text-xl md:text-2xl">Três passos, menos de dois minutos.</h2>
+      <h2 className="max-w-lg text-xl md:text-2xl">Três passos, menos de dois minutos.</h2>
 
       <Revela seletor="li">
         <ol className="mt-10 grid gap-px border border-asfalto/15 bg-asfalto/15 md:grid-cols-3">

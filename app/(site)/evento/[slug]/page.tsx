@@ -56,7 +56,7 @@ export default async function PaginaEvento({
       <section className="sobre-escuro raias bg-asfalto text-papel">
         <div className="pagina grid gap-10 py-12 md:grid-cols-[1fr_280px] md:items-center md:py-16">
           <div>
-            <p className="rotulo rotulo-marcado text-papel/50">
+            <p className="rotulo text-papel/50">
               {evento.cidade} · {evento.uf}
             </p>
             <h1 className="mt-4 text-2xl md:text-3xl">{evento.nome}</h1>
@@ -127,7 +127,7 @@ export default async function PaginaEvento({
 
         <div className="flex flex-col gap-12 md:col-start-1 md:row-start-1">
           <section>
-            <h2 className="rotulo rotulo-marcado text-traco">Modalidades</h2>
+            <h2 className="rotulo text-traco">Modalidades</h2>
             <Revela seletor="li">
             <ul className="mt-4 border-t border-asfalto/15">
               {modalidades.map((modalidade) => (
@@ -170,7 +170,7 @@ export default async function PaginaEvento({
 
           {(evento.horarioLargada || evento.retiradaKit) && (
             <section>
-              <h2 className="rotulo rotulo-marcado text-traco">Horários</h2>
+              <h2 className="rotulo text-traco">Horários</h2>
               <dl className="mt-4 grid gap-4 sm:grid-cols-2">
                 {evento.horarioLargada && (
                   <div className="border-l border-azul pl-4">
@@ -280,7 +280,7 @@ function BlocoPreco({
     <div className="border border-asfalto/20 bg-white">
       <div className="perfuracao" aria-hidden />
       <div className="p-5">
-        <p className="rotulo rotulo-marcado text-traco">{lote.nome}</p>
+        <p className="rotulo text-traco">{lote.nome}</p>
         <p className="numeral numeral-veloz mt-3 text-2xl text-azul">
           {formataMoeda(lote.precoCentavos)}
         </p>

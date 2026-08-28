@@ -64,8 +64,11 @@ Três texturas emprestadas da prova, todas em CSS puro — nenhuma carrega image
   de um botão, e usa por ser literalmente a linha de chegada.
 - **Raias** (`.raias`) — linhas diagonais a 115° com 4% de opacidade nos blocos
   de asfalto. Textura, não decoração: some se você olhar de perto.
-- **Traço do rótulo** (`.rotulo-marcado`) — um risco verde de 18px antes de cada
-  eyebrow, dando cor ao ritmo das seções.
+- **Linha de ritmo** (`.linha-ritmo`) — traços de 9px inclinados a -14° correndo
+  no pé do hero, com uma passada verde cruzando de tempos em tempos. É a
+  marcação da raia passando sob quem corre; substituiu a fita naquele bloco,
+  porque ali o assunto é continuar, não chegar. As pontas somem numa máscara
+  para a repetição não denunciar a emenda.
 
 ## Movimento
 
@@ -89,13 +92,15 @@ Onde há movimento e por quê:
 | Card em foco | Faixa preenche de azul da esquerda, numeral avança 4px, capa cresce 3% | Que ele é clicável, e que o assunto é avançar |
 | Barra de progresso | Translada com o scroll | Quanto ainda tem para o lado |
 | Botões | `scale(0.985)` ao pressionar, seta desliza no hover | Que o toque foi registrado |
+| Pé do hero | Traços correm a 29px/s em laço contínuo; a passada verde cruza a cada 6,2s | Passo constante — a prova segue |
 
 A revelação em cascata depende da classe `js`, colocada no `<html>` antes da
 primeira pintura. Sem JavaScript o conteúdo aparece normalmente — nunca fica
 preso invisível.
 
-`prefers-reduced-motion` desliga a inércia, a cascata, a máscara e o scroll
-suave; a inclinação dos numerais fica, porque é forma, não movimento.
+`prefers-reduced-motion` desliga a inércia, a cascata, a máscara, a linha de
+ritmo e o scroll suave; a inclinação dos numerais e a dos traços fica, porque é
+forma, não movimento.
 
 ## Rolagem
 
@@ -132,4 +137,4 @@ vários.
 3. Foco visível em tudo que é interativo — amarelo sobre fundo escuro, azul sobre claro.
 4. Label real associado a cada input. Placeholder nunca é label.
 5. Erro embaixo do campo, em texto direto, anunciado por `role="alert"`.
-6. Nada de gradiente em hero, ilustração genérica de corredor ou foto de banco de imagem. Enquanto não houver a foto real da prova, o espaço fica reservado com o nome do evento.
+6. Nada de ilustração genérica de corredor ou foto de banco de imagem. A foto do hero é da própria organização, e o escurecimento por cima dela existe para o texto passar em AA — é contraste, não gradiente decorativo. Na capa da prova, enquanto não houver a foto real, o espaço fica reservado com o nome do evento.
