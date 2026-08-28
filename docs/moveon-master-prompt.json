@@ -1,0 +1,430 @@
+{
+  "meta": {
+    "nome_do_projeto": "MoveON",
+    "versao_do_prompt": "1.0",
+    "tipo": "master_prompt",
+    "objetivo": "Gerar uma plataforma web de inscrição em eventos de corrida de rua para um organizador local, com vitrine de eventos, formulário de inscrição, banco de dados e finalização via WhatsApp.",
+    "como_usar": "Cole este JSON inteiro como prompt em um agente de código (Claude Code, Cursor, Lovable, v0, Bolt). O agente deve tratar cada chave como requisito obrigatório, salvo onde marcado como 'opcional' ou 'fase_2'.",
+    "idioma_da_interface": "pt-BR",
+    "moeda": "BRL",
+    "fuso_horario": "America/Sao_Paulo"
+  },
+
+  "contexto_de_negocio": {
+    "quem_usa": {
+      "participante": "Corredor amador, maioria em celular, faixa de 25 a 60 anos, cidade do interior. Quer se inscrever em menos de 2 minutos e falar com o organizador no WhatsApp.",
+      "organizador": "Cliente único nesta fase. Cadastra os eventos, acompanha os inscritos, recebe o Pix manualmente e confirma a inscrição."
+    },
+    "modelo_operacional_fase_1": "Pagamento manual: o participante preenche o formulário, o registro é salvo com status 'pendente' e ele é levado ao WhatsApp do organizador, que envia a chave Pix e devolve o número de inscrição.",
+    "multi_tenant": false,
+    "observacao_multi_tenant": "Modelar o banco com uma coluna organizador_id desde já, mesmo com um único organizador, para permitir múltiplos organizadores sem migração destrutiva na fase 2.",
+    "fora_do_escopo_desta_fase": [
+      "Gateway de pagamento e Pix automático",
+      "Cronometragem, chip e resultados",
+      "Login/conta do participante",
+      "App mobile nativo",
+      "Emissão de nota fiscal"
+    ]
+  },
+
+  "stack": {
+    "recomendada": {
+      "frontend": "Next.js 15 (App Router) + TypeScript + Tailwind CSS",
+      "backend": "Route Handlers do próprio Next.js (API interna)",
+      "banco": "PostgreSQL via Supabase (ou Postgres no VPS com Prisma)",
+      "orm": "Prisma ou Supabase JS client",
+      "auth_admin": "Auth por e-mail e senha apenas para o painel do organizador (Supabase Auth ou NextAuth com credentials)",
+      "storage_de_imagens": "Supabase Storage ou pasta /public com upload local",
+      "deploy": "Vercel ou Docker no VPS do cliente"
+    },
+    "restricoes": [
+      "Sem dependência paga obrigatória na fase 1",
+      "Deve rodar em VPS simples via Docker Compose",
+      "Bundle leve: a maior parte do tráfego é 4G em celular de entrada"
+    ]
+  },
+
+  "modelo_de_dados": {
+    "convencoes": "snake_case, UUID como PK, timestamps created_at e updated_at em todas as tabelas, soft delete via deleted_at onde indicado.",
+    "tabelas": {
+      "organizadores": {
+        "campos": [
+          "id uuid pk",
+          "nome text not null",
+          "whatsapp text not null (formato E.164, ex +5537999999999)",
+          "chave_pix text",
+          "tipo_chave_pix text (cpf|cnpj|email|telefone|aleatoria)",
+          "logo_url text",
+          "created_at timestamptz",
+          "updated_at timestamptz"
+        ]
+      },
+      "eventos": {
+        "campos": [
+          "id uuid pk",
+          "organizador_id uuid fk -> organizadores.id",
+          "slug text unique not null",
+          "nome text not null",
+          "subtitulo text",
+          "descricao text",
+          "data_evento timestamptz not null",
+          "local_nome text not null",
+          "cidade text not null",
+          "uf char(2) not null",
+          "endereco text",
+          "imagem_capa_url text",
+          "regulamento_url text",
+          "inscricoes_abrem_em timestamptz",
+          "inscricoes_fecham_em timestamptz",
+          "limite_vagas int",
+          "status text (rascunho|publicado|encerrado|cancelado) default 'rascunho'",
+          "destaque boolean default false",
+          "created_at timestamptz",
+          "updated_at timestamptz",
+          "deleted_at timestamptz"
+        ],
+        "indices": ["slug", "status", "data_evento"]
+      },
+      "modalidades": {
+        "descricao": "Percursos de um evento: 5km, 10km, caminhada 3km, kids.",
+        "campos": [
+          "id uuid pk",
+          "evento_id uuid fk -> eventos.id on delete cascade",
+          "nome text not null (ex '10 km')",
+          "distancia_km numeric",
+          "idade_minima int default 0",
+          "limite_vagas int",
+          "ordem int default 0"
+        ]
+      },
+      "lotes": {
+        "descricao": "Faixas de preço por período ou por quantidade. Padrão do mercado brasileiro de corrida de rua.",
+        "campos": [
+          "id uuid pk",
+          "evento_id uuid fk -> eventos.id on delete cascade",
+          "nome text not null (ex '1º lote')",
+          "preco_centavos int not null",
+          "inicio_em timestamptz",
+          "fim_em timestamptz",
+          "limite_vagas int",
+          "ordem int default 0",
+          "ativo boolean default true"
+        ],
+        "regra": "O lote vigente é o primeiro lote ativo cuja janela de datas contém agora() e cujo limite de vagas não foi atingido, ordenado por 'ordem'."
+      },
+      "inscricoes": {
+        "campos": [
+          "id uuid pk",
+          "evento_id uuid fk -> eventos.id",
+          "modalidade_id uuid fk -> modalidades.id",
+          "lote_id uuid fk -> lotes.id",
+          "numero_inscricao text unique not null",
+          "nome_completo text not null",
+          "cpf text not null (armazenar somente dígitos)",
+          "data_nascimento date not null",
+          "idade int (calculada na data do evento)",
+          "sexo text (masculino|feminino|nao_informar)",
+          "telefone text not null (E.164, chave de identificação da pessoa)",
+          "email text",
+          "tamanho_camisa text (PP|P|M|G|GG|XGG)",
+          "modelo_camisa text (masculina|baby_look) opcional",
+          "equipe text opcional",
+          "contato_emergencia_nome text",
+          "contato_emergencia_telefone text",
+          "forma_pagamento text (pix|dinheiro|cartao_na_hora)",
+          "valor_centavos int not null",
+          "status text (pendente|aguardando_confirmacao|confirmada|cancelada) default 'pendente'",
+          "aceite_regulamento boolean not null",
+          "aceite_lgpd boolean not null",
+          "aceite_em timestamptz",
+          "ip_aceite text",
+          "observacoes_admin text",
+          "confirmada_em timestamptz",
+          "created_at timestamptz",
+          "updated_at timestamptz"
+        ],
+        "constraints": [
+          "unique (evento_id, cpf) — impede inscrição duplicada da mesma pessoa no mesmo evento",
+          "index (telefone) — permite recuperar todo o histórico de uma pessoa pelo telefone",
+          "index (evento_id, status)"
+        ]
+      }
+    },
+    "identidade_da_pessoa": "O telefone em formato E.164 é a chave de identificação do participante entre eventos. Ao digitar um telefone já existente, o sistema pré-preenche nome, CPF, data de nascimento e tamanho de camisa da última inscrição, sempre com confirmação visível do usuário e sem expor dados de terceiros: só pré-preencher se o CPF informado bater com o do cadastro anterior, ou usar a estratégia mais simples de não pré-preencher nada na fase 1 caso a validação seja custosa."
+  },
+
+  "fluxos": {
+    "participante": [
+      "1. Abre a home e vê a vitrine horizontal de eventos publicados.",
+      "2. Arrasta o carrossel com o dedo ou o mouse e clica em um evento.",
+      "3. Cai na página do evento: capa, data, local, modalidades, lote vigente com preço, vagas restantes, regulamento.",
+      "4. Clica em 'Fazer inscrição' e preenche o formulário em uma única página, com validação em tempo real.",
+      "5. Marca o aceite do regulamento e o aceite de dados (LGPD).",
+      "6. Clica em 'Enviar inscrição'. O registro é gravado com status 'pendente' e o número de inscrição é gerado.",
+      "7. Vai para a tela de confirmação, que mostra o número de inscrição, o valor e o botão 'Finalizar no WhatsApp'.",
+      "8. O botão abre o WhatsApp do organizador com mensagem pré-preenchida contendo nome, evento, modalidade e número de inscrição.",
+      "9. O organizador envia o Pix, recebe o comprovante e marca a inscrição como confirmada no painel."
+    ],
+    "organizador": [
+      "Entra em /admin com e-mail e senha.",
+      "Cria e publica eventos, com modalidades e lotes.",
+      "Vê a lista de inscritos por evento, com filtro por status, modalidade e busca por nome, CPF ou telefone.",
+      "Marca inscrições como confirmada ou cancelada.",
+      "Exporta CSV com todos os campos, incluindo a contagem por tamanho de camisa para o pedido na confecção."
+    ]
+  },
+
+  "paginas": {
+    "/": {
+      "nome": "Home",
+      "blocos": [
+        "Cabeçalho fixo com logo MoveON e link para WhatsApp do organizador.",
+        "Hero curto: uma frase sobre a próxima corrida e um botão que rola até a vitrine.",
+        "VITRINE HORIZONTAL de eventos publicados, ordenada por data mais próxima. Este é o bloco principal e deve aparecer sem precisar rolar muito no celular.",
+        "Seção 'Como funciona' em 3 passos: escolhe a prova, preenche os dados, finaliza no WhatsApp.",
+        "Rodapé com contato, redes sociais e aviso de privacidade."
+      ]
+    },
+    "/evento/[slug]": {
+      "nome": "Página do evento",
+      "blocos": [
+        "Capa do evento com nome, data por extenso, cidade/UF.",
+        "Bloco de preço: lote vigente, valor, data em que o lote vira e vagas restantes se houver limite.",
+        "Lista de modalidades com distância e idade mínima.",
+        "Descrição, percurso, o que vem no kit, horário de largada e retirada de kit.",
+        "Link para o regulamento em PDF.",
+        "Botão fixo no rodapé em mobile: 'Fazer inscrição — R$ XX,00'.",
+        "Estado 'inscrições encerradas' quando passar de inscricoes_fecham_em, o limite de vagas for atingido ou o status for encerrado/cancelado."
+      ]
+    },
+    "/evento/[slug]/inscricao": {
+      "nome": "Formulário de inscrição",
+      "layout": "Página única, campos empilhados, um por linha em mobile. Sem múltiplas etapas.",
+      "resumo_lateral": "Card fixo (desktop) ou barra no topo (mobile) com evento, modalidade escolhida e valor atualizado em tempo real."
+    },
+    "/inscricao/[numero]": {
+      "nome": "Confirmação",
+      "conteudo": [
+        "Número de inscrição em destaque, com botão de copiar.",
+        "Aviso claro: 'Sua inscrição ainda não está confirmada. Finalize o pagamento no WhatsApp.'",
+        "Botão grande verde 'Finalizar no WhatsApp'.",
+        "Resumo dos dados enviados e valor.",
+        "Instrução de guardar o número."
+      ]
+    },
+    "/admin": {
+      "nome": "Painel do organizador",
+      "subpaginas": [
+        "/admin — dashboard com total de inscritos, confirmados, pendentes e receita prevista por evento",
+        "/admin/eventos — lista e CRUD",
+        "/admin/eventos/[id] — edição do evento, modalidades e lotes",
+        "/admin/eventos/[id]/inscritos — tabela de inscritos com filtros, ação de confirmar/cancelar e exportação CSV",
+        "/admin/configuracoes — dados do organizador, WhatsApp e chave Pix"
+      ]
+    }
+  },
+
+  "componente_vitrine_horizontal": {
+    "prioridade": "alta — é o pedido central do cliente",
+    "comportamento": {
+      "mobile": "Scroll horizontal nativo por toque, com CSS scroll-snap-type: x mandatory e scroll-snap-align: center em cada card. Nada de biblioteca de carrossel pesada.",
+      "desktop": "Arrastar com o mouse (pointer events: pointerdown/pointermove/pointerup com inércia leve), roda do mouse convertida em scroll horizontal, e setas de navegação visíveis nas laterais.",
+      "teclado": "Setas esquerda/direita movem entre cards quando a vitrine está focada; cada card é um link acessível via Tab."
+    },
+    "dicas_de_implementacao": [
+      "Container: display flex, overflow-x auto, scroll-snap-type x mandatory, gap consistente, scrollbar escondida com scrollbar-width: none e ::-webkit-scrollbar { display: none }.",
+      "Card: flex-shrink 0, largura 82vw no mobile (para o próximo card 'espiar' na borda e indicar que dá pra arrastar) e largura fixa ~360px no desktop.",
+      "Padding lateral do container igual à margem da página, usando scroll-padding-inline para o snap não cortar o primeiro card.",
+      "Indicador de progresso discreto abaixo da vitrine (pontos ou barra), refletindo a posição do scroll.",
+      "Respeitar prefers-reduced-motion desativando a animação de inércia e o scroll suave."
+    ],
+    "conteudo_do_card": [
+      "Imagem de capa com proporção 4:5",
+      "Etiqueta de data no formato 'SEX 12 SET'",
+      "Nome do evento",
+      "Cidade/UF",
+      "Modalidades resumidas: '5 km · 10 km · caminhada'",
+      "Preço do lote vigente 'a partir de R$ 60'",
+      "Selo de urgência quando aplicável: 'últimas vagas' ou 'lote vira em 3 dias'"
+    ]
+  },
+
+  "formulario_de_inscricao": {
+    "campos": [
+      { "campo": "modalidade", "tipo": "select", "obrigatorio": true, "regra": "Só lista modalidades com vagas e compatíveis com a idade informada." },
+      { "campo": "nome_completo", "tipo": "text", "obrigatorio": true, "validacao": "mínimo 2 palavras, mínimo 5 caracteres, autocapitalize words" },
+      { "campo": "cpf", "tipo": "text", "obrigatorio": true, "mascara": "000.000.000-00", "validacao": "algoritmo dos dígitos verificadores; bloquear sequências repetidas; salvar somente dígitos", "inputmode": "numeric" },
+      { "campo": "data_nascimento", "tipo": "date", "obrigatorio": true, "validacao": "idade calculada na data do evento; comparar com idade_minima da modalidade" },
+      { "campo": "sexo", "tipo": "radio", "obrigatorio": true, "opcoes": ["Masculino", "Feminino", "Prefiro não informar"], "motivo": "Necessário para a premiação por categoria" },
+      { "campo": "telefone", "tipo": "tel", "obrigatorio": true, "mascara": "(00) 00000-0000", "validacao": "DDD válido, 11 dígitos com o 9; normalizar para E.164 antes de salvar", "inputmode": "numeric" },
+      { "campo": "email", "tipo": "email", "obrigatorio": false },
+      { "campo": "tamanho_camisa", "tipo": "select_visual", "obrigatorio": true, "opcoes": ["PP", "P", "M", "G", "GG", "XGG"], "ui": "botões em linha, não dropdown" },
+      { "campo": "modelo_camisa", "tipo": "radio", "obrigatorio": false, "opcoes": ["Masculina", "Baby look"] },
+      { "campo": "equipe", "tipo": "text", "obrigatorio": false, "placeholder": "Assessoria ou grupo de corrida" },
+      { "campo": "contato_emergencia_nome", "tipo": "text", "obrigatorio": true },
+      { "campo": "contato_emergencia_telefone", "tipo": "tel", "obrigatorio": true, "mascara": "(00) 00000-0000" },
+      { "campo": "forma_pagamento", "tipo": "radio", "obrigatorio": true, "opcoes": ["Pix", "Dinheiro na retirada do kit"], "nota": "Configurável pelo organizador por evento" },
+      { "campo": "aceite_regulamento", "tipo": "checkbox", "obrigatorio": true, "texto": "Li o regulamento e assumo total responsabilidade pela minha participação, declarando estar apto fisicamente para a prova.", "com_link": "abre o PDF do regulamento em nova aba" },
+      { "campo": "aceite_lgpd", "tipo": "checkbox", "obrigatorio": true, "texto": "Autorizo o uso dos meus dados para organização do evento, conforme o aviso de privacidade." }
+    ],
+    "ux": [
+      "Validar no blur de cada campo, não só no envio.",
+      "Mensagens de erro embaixo do campo, em texto direto: 'CPF inválido. Confira os números.'",
+      "Botão de envio desabilitado só quando houver erro visível, nunca em silêncio.",
+      "Ao enviar, botão vira estado de carregamento e bloqueia duplo clique.",
+      "Salvar rascunho do formulário no localStorage para não perder dados se a página cair."
+    ]
+  },
+
+  "regras_de_negocio": {
+    "numero_de_inscricao": {
+      "formato": "MV-{ANO}-{SIGLA_EVENTO}-{SEQUENCIAL_4_DIGITOS}",
+      "exemplo": "MV-2026-CFO-0087",
+      "geracao": "Sequencial por evento, gerado no banco dentro da mesma transação da inserção, para evitar colisão."
+    },
+    "vagas": "Contar inscrições com status diferente de 'cancelada'. Ao atingir limite_vagas do evento ou da modalidade, bloquear novas inscrições e mostrar 'esgotado'.",
+    "lote_vigente": "Calculado no servidor no momento do envio, nunca confiando no valor vindo do cliente. Se o lote virou entre a abertura do formulário e o envio, mostrar aviso com o novo valor e pedir reconfirmação.",
+    "cpf_duplicado": "Se o CPF já existir naquele evento, mostrar: 'Este CPF já está inscrito nesta prova. Fale com a organização se precisar alterar algo.' e oferecer o botão de WhatsApp.",
+    "menor_de_idade": "Se a idade na data do evento for menor que 18, exigir nome e CPF do responsável e exibir aviso de que o termo de responsabilidade assinado deve ser entregue na retirada do kit.",
+    "categoria_etaria": {
+      "calculo": "Idade completada até 31 de dezembro do ano do evento, padrão usado nas corridas de rua brasileiras.",
+      "faixas": ["até 19", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"],
+      "uso": "Campo derivado, exibido no painel e no CSV para a premiação. Não é preenchido pelo participante."
+    },
+    "status_da_inscricao": {
+      "pendente": "Enviada, ainda não foi ao WhatsApp ou não pagou.",
+      "aguardando_confirmacao": "Participante clicou em finalizar no WhatsApp. Marcado automaticamente no clique.",
+      "confirmada": "Organizador confirmou o pagamento no painel.",
+      "cancelada": "Desistência ou não pagamento."
+    }
+  },
+
+  "integracao_whatsapp": {
+    "metodo": "Deep link wa.me, sem API oficial nesta fase.",
+    "url": "https://wa.me/{whatsapp_organizador_sem_simbolos}?text={mensagem_url_encoded}",
+    "template_da_mensagem": "Olá! Acabei de me inscrever na {nome_do_evento}.\n\nNúmero de inscrição: {numero_inscricao}\nNome: {nome_completo}\nModalidade: {modalidade}\nCamisa: {tamanho_camisa}\nValor: R$ {valor}\n\nPode me enviar o Pix para finalizar?",
+    "regras": [
+      "Codificar a mensagem com encodeURIComponent.",
+      "Abrir em nova aba com rel='noopener'.",
+      "Registrar o clique atualizando o status para 'aguardando_confirmacao'.",
+      "Mostrar também o número do WhatsApp em texto, para quem estiver no desktop sem WhatsApp Web."
+    ]
+  },
+
+  "painel_admin": {
+    "tabela_de_inscritos": {
+      "colunas": ["Número", "Nome", "Modalidade", "Camisa", "Telefone", "Valor", "Status", "Data", "Ações"],
+      "filtros": ["status", "modalidade", "lote", "busca por nome/CPF/telefone"],
+      "acoes_em_massa": ["marcar como confirmada", "exportar selecionados"]
+    },
+    "exportacao_csv": {
+      "encoding": "UTF-8 com BOM, para abrir corretamente no Excel brasileiro",
+      "separador": ";",
+      "colunas": "todos os campos da inscrição mais categoria etária calculada"
+    },
+    "relatorio_de_camisas": "Bloco com a contagem por tamanho e modelo, para o organizador fechar o pedido com a confecção.",
+    "acesso": "Rota protegida por sessão. Redirecionar não autenticados para /admin/login."
+  },
+
+  "design": {
+    "conceito": "O universo do número de peito. A referência visual não é 'site de evento genérico', é o kit de corrida: papel do número, tipografia de cronômetro, cores de cone e fita de chegada.",
+    "elemento_assinatura": "O card de evento é desenhado como um número de peito: bloco tipográfico grande com a distância em numerais tabulares, borda com furos de perfuração no topo e uma faixa inferior com a data. É o que a pessoa reconhece de longe na vitrine.",
+    "tokens": {
+      "cores": {
+        "azul_cronometro": "#16277A",
+        "verde_chegada": "#00C2A8",
+        "amarelo_cone": "#FFD23F",
+        "asfalto": "#20242B",
+        "papel_peito": "#F6F5F1",
+        "cinza_traco": "#8E939C"
+      },
+      "uso_das_cores": "Asfalto como fundo das seções fortes, papel como base geral, azul cronômetro para estrutura e títulos, verde chegada só para ações de avanço (botões de inscrição e WhatsApp), amarelo cone só para avisos de urgência como 'últimas vagas'. Nunca usar verde e amarelo juntos no mesmo componente.",
+      "tipografia": {
+        "display": "Archivo (peso 800, largura expanded) — títulos e números de peito",
+        "corpo": "Public Sans — textos, labels e formulário",
+        "dados": "IBM Plex Mono — número de inscrição, distâncias, horários, valores em tabela",
+        "escala": "12 / 14 / 16 / 20 / 28 / 40 / 64, line-height 1.2 em display e 1.55 em corpo"
+      },
+      "raio": "4px em inputs e botões, 0px nos cards de evento (o número de peito é reto)",
+      "sombra": "Praticamente nenhuma. Separação por contraste de cor e linha de 1px."
+    },
+    "regras_visuais": [
+      "Mobile-first de verdade: desenhar a 375px e só então expandir.",
+      "Botão principal com no mínimo 48px de altura e área de toque confortável.",
+      "Contraste mínimo AA em todo texto.",
+      "Nenhuma animação decorativa. Movimento só onde comunica: o snap da vitrine e a transição de estado do botão.",
+      "Evitar gradiente em hero, ilustração genérica de corredor em vetor e foto de banco de imagem — usar as fotos reais das provas do organizador."
+    ],
+    "microcopy": {
+      "botao_principal": "Fazer inscrição",
+      "botao_envio": "Enviar inscrição",
+      "botao_whatsapp": "Finalizar no WhatsApp",
+      "estado_vazio_home": "Nenhuma prova aberta agora. Siga a organização para saber da próxima.",
+      "erro_generico": "Não deu pra enviar sua inscrição. Tente de novo em alguns segundos ou fale com a organização no WhatsApp.",
+      "aviso_pendente": "Sua inscrição ainda não está confirmada. Finalize o pagamento no WhatsApp."
+    }
+  },
+
+  "seguranca_e_lgpd": {
+    "obrigatorio": [
+      "Validar e sanitizar tudo no servidor, mesmo o que já foi validado no cliente.",
+      "Rate limit no endpoint de criação de inscrição (ex: 5 por IP a cada 10 minutos).",
+      "Honeypot ou desafio leve contra bots, sem CAPTCHA que atrapalhe idoso no celular.",
+      "Nunca expor CPF completo em URL, log ou resposta pública. Na confirmação, mostrar apenas os 3 últimos dígitos.",
+      "HTTPS obrigatório e cookies de sessão do admin com httpOnly, secure e sameSite lax.",
+      "Página /privacidade com finalidade da coleta, tempo de retenção e canal para exclusão dos dados.",
+      "Registrar data, hora e IP do aceite do regulamento e do aceite de dados."
+    ]
+  },
+
+  "acessibilidade_e_performance": {
+    "acessibilidade": [
+      "Labels reais associados a cada input, nada de placeholder como label.",
+      "Foco visível em todos os elementos interativos.",
+      "Erros anunciados por aria-live.",
+      "Vitrine navegável por teclado."
+    ],
+    "performance": [
+      "LCP abaixo de 2,5s em 4G.",
+      "Imagens em WebP servidas pelo next/image com tamanhos responsivos.",
+      "Fontes com display swap e subset latin.",
+      "Home e página de evento renderizadas no servidor com revalidação (ISR) de 60 segundos."
+    ]
+  },
+
+  "criterios_de_aceite": [
+    "Consigo arrastar a vitrine com o dedo no celular e com o mouse no desktop, e ela para alinhada em um card.",
+    "Consigo abrir um evento, preencher o formulário e enviar em menos de 2 minutos no celular.",
+    "CPF inválido, telefone incompleto e aceite não marcado bloqueiam o envio com mensagem clara.",
+    "Após enviar, vejo meu número de inscrição e um botão que abre o WhatsApp com a mensagem já escrita.",
+    "A inscrição aparece no painel do organizador em tempo real, com status pendente.",
+    "O organizador consegue criar um evento com 2 modalidades e 3 lotes e publicá-lo sem tocar em código.",
+    "O CSV exportado abre corretamente no Excel com acentuação certa.",
+    "Tentar inscrever o mesmo CPF duas vezes no mesmo evento é bloqueado.",
+    "Com o limite de vagas atingido, o evento mostra 'esgotado' e o formulário fica indisponível."
+  ],
+
+  "entregaveis": [
+    "Código-fonte organizado com README de instalação",
+    "Script de migração do banco e seed com um evento de exemplo",
+    "Arquivo .env.example documentado",
+    "Docker Compose para subir no VPS",
+    "Instruções curtas de uso do painel para o organizador, em linguagem não técnica"
+  ],
+
+  "roadmap": {
+    "fase_1_atual": "Vitrine, inscrição, banco, WhatsApp manual, painel básico.",
+    "fase_2": "Pix automático via gateway (Mercado Pago, Asaas ou Efí), confirmação automática do status e envio de comprovante.",
+    "fase_3": "Área do participante por telefone com histórico de inscrições, cupom de desconto e transferência de inscrição.",
+    "fase_4": "Multi-organizador com subdomínio ou página própria por organizador, e cobrança de taxa por inscrição."
+  },
+
+  "instrucoes_para_o_agente": [
+    "Antes de codar, apresente a estrutura de pastas e o schema do banco para aprovação.",
+    "Implemente na ordem: schema e migrações, painel admin de eventos, página do evento, vitrine, formulário, confirmação, WhatsApp, exportação.",
+    "Não invente campos além dos especificados sem justificar.",
+    "Toda regra de valor, vaga e lote é resolvida no servidor.",
+    "Comente apenas o que não é óbvio pelo código.",
+    "Ao final, rode a lista de criterios_de_aceite e reporte item a item o que passou."
+  ]
+}

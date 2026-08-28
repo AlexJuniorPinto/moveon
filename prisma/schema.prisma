@@ -1,0 +1,166 @@
+// MoveON — schema fase 1.
+// Convenções: snake_case no banco, UUID como PK, created_at/updated_at em todas as
+// tabelas, deleted_at (soft delete) apenas em eventos.
+//
+// Campos fora da especificação original, com a justificativa exigida pelo brief:
+//   organizadores.email / senha_hash  -> exigidos por stack.auth_admin (login do painel)
+//   eventos.sigla                     -> exigido pelo formato MV-{ANO}-{SIGLA}-{SEQ}
+//   eventos.proximo_numero            -> contador do sequencial por evento, incrementado
+//                                        na mesma transação da inscrição (regra "geracao")
+//   eventos.aceita_pix / aceita_dinheiro -> "forma_pagamento configurável pelo organizador
+//                                        por evento" (formulario_de_inscricao)
+//   eventos.percurso / kit / horario_largada / retirada_kit -> blocos exigidos pela
+//                                        página /evento/[slug]
+//   inscricoes.responsavel_nome / responsavel_cpf -> regra menor_de_idade
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organizador {
+  id           String   @id @default(uuid()) @db.Uuid
+  nome         String
+  whatsapp     String // E.164, ex: +5537999999999
+  email        String   @unique
+  senhaHash    String   @map("senha_hash")
+  chavePix     String?  @map("chave_pix")
+  tipoChavePix String?  @map("tipo_chave_pix") // cpf | cnpj | email | telefone | aleatoria
+  logoUrl      String?  @map("logo_url")
+  instagram    String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  eventos Evento[]
+
+  @@map("organizadores")
+}
+
+model Evento {
+  id                 String    @id @default(uuid()) @db.Uuid
+  organizadorId      String    @map("organizador_id") @db.Uuid
+  slug               String    @unique
+  sigla              String    @db.VarChar(4)
+  nome               String
+  subtitulo          String?
+  descricao          String?
+  percurso           String?
+  kit                String?
+  horarioLargada     String?   @map("horario_largada")
+  retiradaKit        String?   @map("retirada_kit")
+  dataEvento         DateTime  @map("data_evento") @db.Timestamptz(6)
+  localNome          String    @map("local_nome")
+  cidade             String
+  uf                 String    @db.Char(2)
+  endereco           String?
+  imagemCapaUrl      String?   @map("imagem_capa_url")
+  regulamentoUrl     String?   @map("regulamento_url")
+  inscricoesAbremEm  DateTime? @map("inscricoes_abrem_em") @db.Timestamptz(6)
+  inscricoesFechamEm DateTime? @map("inscricoes_fecham_em") @db.Timestamptz(6)
+  limiteVagas        Int?      @map("limite_vagas")
+  status             String    @default("rascunho") // rascunho | publicado | encerrado | cancelado
+  destaque           Boolean   @default(false)
+  aceitaPix          Boolean   @default(true) @map("aceita_pix")
+  aceitaDinheiro     Boolean   @default(false) @map("aceita_dinheiro")
+  proximoNumero      Int       @default(0) @map("proximo_numero")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organizador Organizador  @relation(fields: [organizadorId], references: [id])
+  modalidades Modalidade[]
+  lotes       Lote[]
+  inscricoes  Inscricao[]
+
+  @@index([status])
+  @@index([dataEvento])
+  @@map("eventos")
+}
+
+model Modalidade {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventoId    String   @map("evento_id") @db.Uuid
+  nome        String // ex: "10 km"
+  distanciaKm Decimal? @map("distancia_km") @db.Decimal(6, 2)
+  idadeMinima Int      @default(0) @map("idade_minima")
+  limiteVagas Int?     @map("limite_vagas")
+  ordem       Int      @default(0)
+
+  evento     Evento      @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  inscricoes Inscricao[]
+
+  @@index([eventoId])
+  @@map("modalidades")
+}
+
+model Lote {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventoId      String    @map("evento_id") @db.Uuid
+  nome          String // ex: "1º lote"
+  precoCentavos Int       @map("preco_centavos")
+  inicioEm      DateTime? @map("inicio_em") @db.Timestamptz(6)
+  fimEm         DateTime? @map("fim_em") @db.Timestamptz(6)
+  limiteVagas   Int?      @map("limite_vagas")
+  ordem         Int       @default(0)
+  ativo         Boolean   @default(true)
+
+  evento     Evento      @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  inscricoes Inscricao[]
+
+  @@index([eventoId])
+  @@map("lotes")
+}
+
+model Inscricao {
+  id           String @id @default(uuid()) @db.Uuid
+  eventoId     String @map("evento_id") @db.Uuid
+  modalidadeId String @map("modalidade_id") @db.Uuid
+  loteId       String @map("lote_id") @db.Uuid
+
+  numeroInscricao String @unique @map("numero_inscricao")
+
+  nomeCompleto   String   @map("nome_completo")
+  cpf            String // somente dígitos
+  dataNascimento DateTime @map("data_nascimento") @db.Date
+  idade          Int // idade na data do evento
+  sexo           String // masculino | feminino | nao_informar
+  telefone       String // E.164 — chave de identificação da pessoa entre eventos
+  email          String?
+  tamanhoCamisa  String   @map("tamanho_camisa") // PP | P | M | G | GG | XGG
+  modeloCamisa   String?  @map("modelo_camisa") // masculina | baby_look
+  equipe         String?
+
+  contatoEmergenciaNome     String @map("contato_emergencia_nome")
+  contatoEmergenciaTelefone String @map("contato_emergencia_telefone")
+
+  responsavelNome String? @map("responsavel_nome")
+  responsavelCpf  String? @map("responsavel_cpf")
+
+  formaPagamento String @map("forma_pagamento") // pix | dinheiro
+  valorCentavos  Int    @map("valor_centavos")
+  status         String @default("pendente") // pendente | aguardando_confirmacao | confirmada | cancelada
+
+  aceiteRegulamento Boolean   @map("aceite_regulamento")
+  aceiteLgpd        Boolean   @map("aceite_lgpd")
+  aceiteEm          DateTime? @map("aceite_em") @db.Timestamptz(6)
+  ipAceite          String?   @map("ip_aceite")
+
+  observacoesAdmin String?   @map("observacoes_admin")
+  confirmadaEm     DateTime? @map("confirmada_em") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  evento     Evento     @relation(fields: [eventoId], references: [id])
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+  lote       Lote       @relation(fields: [loteId], references: [id])
+
+  @@unique([eventoId, cpf]) // impede inscrição duplicada da mesma pessoa no mesmo evento
+  @@index([telefone])
+  @@index([eventoId, status])
+  @@map("inscricoes")
+}
