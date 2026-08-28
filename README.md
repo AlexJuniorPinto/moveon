@@ -171,6 +171,32 @@ token.
 
 ---
 
+## Demonstração estática
+
+Para mostrar o produto sem infraestrutura, o site público pode ser exportado
+como HTML estático com provas de exemplo:
+
+```bash
+npm run build:demo   # gera out/
+```
+
+O build roda sobre uma cópia temporária do projeto — a árvore de trabalho não é
+tocada, mesmo se falhar. Na cópia, o painel e as rotas de API saem (precisam de
+servidor) e os `dynamic`/`revalidate` viram estáticos. Com `MOVEON_DEMO=1` as
+leituras desviam para `lib/demo.ts` em vez do banco, e o formulário valida
+normalmente mas leva a uma confirmação de exemplo sem gravar nada. Uma faixa
+fixa no topo avisa que é demonstração.
+
+No ar em <https://alexjuniorpinto.github.io/moveon/> (branch `gh-pages`), com o
+guia do organizador em `/guia`.
+
+Para republicar depois de mudar o site:
+
+```bash
+npm run build:demo
+# publique o conteúdo de out/ no branch gh-pages
+```
+
 ## Deploy
 
 ### Vercel
