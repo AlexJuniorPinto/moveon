@@ -57,6 +57,9 @@
 
   /* corpo */
   .corpo{display:grid;gap:40px;padding-block:44px}
+  /* Itens de grid têm min-width:auto: sem isto, a tabela de 460px estica a
+     coluna e o texto vaza para fora da tela no celular. */
+  .corpo>*{min-width:0}
   @media(min-width:1000px){.corpo{grid-template-columns:220px 1fr;gap:56px;padding-block:64px}}
 
   nav.indice{display:none}
