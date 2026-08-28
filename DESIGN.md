@@ -25,7 +25,7 @@ Definidos em `app/globals.css`, no bloco `@theme` do Tailwind 4.
 | Token | Hex | Uso |
 |---|---|---|
 | `azul` | `#16277A` | Estrutura, títulos de dado, numerais, foco |
-| `verde` | `#00C2A8` | **Só** ações de avanço: inscrever e finalizar no WhatsApp |
+| `verde` | `#00C2A8` | Ações de avanço (inscrever, finalizar no WhatsApp) e a fita de chegada, que é a mesma ideia em forma de textura |
 | `amarelo` | `#FFD23F` | **Só** urgência: últimas vagas, lote virando |
 | `asfalto` | `#20242B` | Fundo das seções fortes e texto padrão |
 | `papel` | `#F6F5F1` | Base geral |
@@ -113,7 +113,7 @@ vários.
 
 - **Toque:** scroll nativo com `scroll-snap-type: x mandatory`. Nada é interceptado, o momentum do sistema continua valendo.
 - **Mouse:** arraste com inércia. O modo de arraste só liga depois de 6px de movimento — abaixo disso é clique, e o card abre.
-- **Roda:** vertical vira horizontal, mas o gesto volta para a página quando a vitrine chega ao fim.
+- **Roda:** só o gesto horizontal move os cards, e move de card em card. O gesto vertical nunca é interceptado — ver "Rolagem" acima.
 - **Teclado:** a vitrine é uma região focável; as setas andam de card em card. Cada card é um link alcançável por Tab.
 - Largura do card: 82vw no mobile (o próximo "espia" na borda e indica o arraste) e 360px no desktop.
 - O recuo interno acompanha a margem da página e, em telas largas, o alinhamento da coluna de conteúdo.
