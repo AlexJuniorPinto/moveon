@@ -85,8 +85,27 @@ páginas sem hero ele é papel sólido em qualquer posição de rolagem.
 **Placa de cronômetro** (`.placa`) — o painel de largada, e a âncora do
 numeral, que antes flutuava solto no meio da foto. É a mesma tarja escura do pé
 do peitoral, agora como instrumento: a contagem é a leitura, e os dados da prova
-ficam em colunas tabulares ao lado, separadas por fio de 1px. Ela tem ground
-próprio, o que resolve a legibilidade localmente — é por isso que o `text-shadow`
+ficam em colunas tabulares ao lado, separadas por fio de 1px.
+
+**E o instrumento anda.** A placa chamava-se cronômetro mas mostrava um número
+de dias parado, calculado no servidor: um rótulo com cara de relógio. Hoje o
+componente é cliente (`components/cronometro.tsx`), o servidor entrega só o
+primeiro quadro — igual na hidratação, por isso não há descasamento — e o
+relógio do visitante assume no primeiro tique. O tique é alinhado ao segundo
+cheio, não a um `setInterval` que escorrega, e resincroniza quando a aba volta
+a ficar visível.
+
+A leitura tem dois andares. Em cima, o numeral de dias em tamanho de peitoral —
+continua sendo o número que *é* o conteúdo. Embaixo, `HH:MM:SS` em Plex Mono: a
+leitura fina, o que sobra do dia. No dia da prova o numeral vira a palavra
+"hoje" e, passada a largada, a linha fina dá lugar a "LARGADA DADA".
+
+O **acento** marca o que está correndo: o par de segundos e o fio da borda de
+cima. Verde na rotina, amarelo inteiro a menos de uma semana da largada — a
+troca é de bloco, então a regra de nunca ter verde e amarelo no mesmo
+componente continua valendo. Urgência aqui é cor, nunca velocidade.
+
+Ela tem ground próprio, o que resolve a legibilidade localmente — é por isso que o `text-shadow`
 genérico que existia em todo `h1`, `p` e `a` do hero pôde ser desligado. Sobra
 uma sombra curta no título e na linha de apoio, que ficam direto sobre a foto;
 o botão e a placa não levam sombra nenhuma.
@@ -117,9 +136,8 @@ Três texturas emprestadas da prova, todas em CSS puro — nenhuma carrega image
 - **Raias** (`.raias`) — linhas diagonais a 115° com 4% de opacidade nos blocos
   de asfalto. Textura, não decoração: some se você olhar de perto.
 - **Linha de ritmo** (`.linha-ritmo`) — traços de 9px inclinados a -14° correndo
-  no pé do hero, com uma passada verde cruzando de tempos em tempos. É a
-  marcação da raia passando sob quem corre; substituiu a fita naquele bloco,
-  porque ali o assunto é continuar, não chegar. As pontas somem numa máscara
+  no pé do hero. É a marcação da raia passando sob quem corre; substituiu a
+  fita naquele bloco, porque ali o assunto é continuar, não chegar. As pontas somem numa máscara
   para a repetição não denunciar a emenda.
 
 ## Movimento
@@ -144,7 +162,23 @@ uma cascata solta:
 - *Primária* — os quatro blocos do conteúdo sobem 24px saindo de `blur(10px)`,
   620ms, escalonados de 70 em 70ms.
 - *Secundária* — o numeral rola de trás da máscara aos 230ms, quando a placa
-  já chegou ao lugar. O dígito vira depois que o instrumento ligou.
+  já chegou ao lugar. O dígito vira depois que o instrumento ligou. Aos 400ms a
+  leitura fina sobe 10px e aos 470ms o fio de segundos acende. O cronômetro liga
+  de cima para baixo e só então começa a andar.
+
+**O segundo momento é o cronômetro rodando**, e ele também tem três camadas —
+mas nenhuma delas é enfeite: as três são a leitura do instrumento.
+
+- *Primária* — o dígito que vira sai por cima em 240ms (`--ease-mv`, encolhendo
+  para 0,88 em Y) enquanto o novo sobe de baixo em 300ms (`--ease-saida`,
+  entrando esticado a 1,16). O algarismo antigo precisa ter para onde ir; sem
+  ele a máscara pisca vazia no meio da troca.
+- *Secundária* — o fio de segundos varre a borda de cima da chapa em um minuto,
+  ligando um salto discreto ao outro. É `scaleX` com origem à esquerda, não
+  largura: transform não custa layout a cada segundo. Na virada do minuto a
+  transição é desligada, senão o fio desenharia o caminho de volta.
+- *Ambiente* — os dois-pontos respiram na batida de 1s. É o sinal de que o
+  instrumento está rodando para quem não está lendo os dígitos.
 
 Onde há movimento e por quê:
 
@@ -152,23 +186,29 @@ Onde há movimento e por quê:
 |---|---|---|
 | Foto do hero | Aproxima de 1,07 a 1 em 1,7s e para | Que a cena está viva, sem virar papel de parede animado |
 | Conteúdo do hero | Sobe 24px saindo de foco, em cascata de 70ms | Ordem de leitura, e a chegada do assunto |
-| Contagem regressiva | Sobe de trás de uma máscara, 620ms, aos 230ms | Dígito de cronômetro virando |
+| Numeral de dias | Sobe de trás de uma máscara, 620ms, aos 230ms | Dígito de cronômetro virando |
+| Dígitos de `HH:MM:SS` | O antigo sai em 240ms, o novo entra em 300ms | Que o tempo está correndo agora, não na hora do build |
+| Fio de segundos | `scaleX` de 0 a 1 em um minuto, e volta seco | O segundo entre um salto de dígito e o outro |
+| Dois-pontos | Respiram de 0,85 a 0,28 a cada segundo | Que o instrumento está ligado |
 | Cabeçalho | Fundo e fio aparecem em 240ms ao sair do topo | Que saímos da foto e entramos na página |
 | Vitrine | `scroll-snap` + inércia no arraste | Que dá para arrastar, e onde o card para |
 | Cards e passos | Revelam em cascata de 65ms ao entrar na tela | Ordem de leitura |
 | Card em foco | Faixa preenche de azul da esquerda, numeral avança 4px, capa cresce 3% | Que ele é clicável, e que o assunto é avançar |
 | Barra de progresso | Translada com o scroll | Quanto ainda tem para o lado |
 | Botões | `scale(0.985)` ao pressionar, seta desliza no hover | Que o toque foi registrado |
-| Pé do hero | Traços correm a 29px/s em laço contínuo; a passada verde cruza a cada 6,2s | Passo constante — a prova segue |
+| Pé do hero | Traços correm a 29px/s em laço contínuo | Passo constante — a prova segue |
 
 A revelação em cascata depende da classe `js`, colocada no `<html>` antes da
 primeira pintura. Sem JavaScript o conteúdo aparece normalmente — nunca fica
 preso invisível.
 
 `prefers-reduced-motion` desliga a inércia, a cascata, a máscara, a aproximação
-da foto, a linha de ritmo e o scroll suave; a inclinação dos numerais e a dos
-traços fica, porque é forma, não movimento. A luz, o grão e a placa também
-ficam: são superfície, não animação.
+da foto, a linha de ritmo e o scroll suave. O cronômetro continua **certo**, só
+para de se mexer: os dígitos trocam secos, a batida congela e o fio de segundos
+vira leitura estática — a informação nunca é o que se corta.
+
+A inclinação dos numerais e a dos traços fica, porque é forma, não movimento.
+A luz, o grão e a placa também ficam: são superfície, não animação.
 
 ## Rolagem
 

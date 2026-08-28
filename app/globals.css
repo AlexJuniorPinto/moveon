@@ -354,13 +354,15 @@
 
 /* ------------------------------------------------------------------
    Placa de cronômetro
-   O mesmo idioma da tarja do peitoral, agora como painel de largada: a
-   contagem é a leitura do instrumento e os dados da prova ficam em colunas
-   tabulares ao lado, separadas por fio. É o que ancora o numeral, que antes
-   flutuava sozinho no meio da foto.
+   O mesmo idioma da tarja do peitoral, agora como instrumento de largada que
+   anda: a contagem é a leitura, os dados da prova ficam em colunas tabulares
+   ao lado, separadas por fio. O acento marca o que está correndo — verde na
+   rotina, amarelo inteiro quando falta menos de uma semana. Nunca os dois.
 ------------------------------------------------------------------- */
 .placa {
   --placa-fio: color-mix(in srgb, var(--color-papel) 17%, transparent);
+  --placa-acento: var(--color-verde);
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   /* Chapa física: a luz bate no topo e escorre para a base. */
@@ -369,20 +371,187 @@
   box-shadow: 0 22px 54px -20px rgb(0 0 0 / 0.72);
 }
 
+.placa[data-urgente="sim"] {
+  --placa-acento: var(--color-amarelo);
+}
+
+/* Camada secundária: o fio de segundos percorre a borda de cima em um minuto e
+   liga um salto de dígito ao outro. É a única parte do instrumento que se move
+   de forma contínua. */
+.placa-fio-segundos {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--placa-acento) 20%, transparent),
+    var(--placa-acento)
+  );
+  box-shadow: 0 0 12px -2px var(--placa-acento);
+  /* Escala em vez de largura: o fio anda o minuto inteiro, e transform não
+     custa layout a cada segundo. */
+  transform: scaleX(var(--avanco, 0));
+  transform-origin: 0 50%;
+  transition: transform 1s linear;
+  pointer-events: none;
+}
+
+/* Na virada do minuto o fio volta ao zero sem transição — com ela, desenharia
+   o caminho de volta. */
+.placa[data-virando="sim"] .placa-fio-segundos,
+.placa[data-parado="sim"] .placa-fio-segundos {
+  transition: none;
+}
+
+.placa[data-parado="sim"] .placa-fio-segundos {
+  transform: scaleX(1);
+  opacity: 0.35;
+}
+
 .placa-leitura {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 1.15rem 1rem;
+}
+
+.placa-contagem {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
-  padding: 0.85rem 1.15rem 1rem;
 }
 
 .placa-numeral {
   font-size: clamp(3.5rem, 13vw, 6.5rem);
+  color: var(--color-papel);
+}
+
+.placa[data-urgente="sim"] .placa-numeral {
+  color: var(--color-amarelo);
 }
 
 /* "hoje" é palavra, não dígito: nos 13vw do numeral ela estoura a célula. */
 .placa-numeral[data-palavra="sim"] {
   font-size: clamp(2.5rem, 9vw, 4.25rem);
+}
+
+.placa-unidade {
+  color: color-mix(in srgb, var(--color-papel) 60%, transparent);
+}
+
+.placa[data-urgente="sim"] .placa-unidade {
+  color: var(--color-amarelo);
+}
+
+/* ------------------------------------------------------------------
+   A leitura fina — horas, minutos, segundos
+------------------------------------------------------------------- */
+.crono-fino {
+  display: flex;
+  align-items: center;
+  gap: 0.12em;
+  font-size: clamp(1rem, 3.2vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-papel) 82%, transparent);
+}
+
+.crono-encerrado {
+  font-family: var(--font-dados);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--placa-acento);
+}
+
+.crono-par {
+  display: flex;
+}
+
+/* Estágio: o par que está correndo leva o acento, para o olho saber onde
+   olhar sem que nada mais precise se mexer. */
+.crono-par-vivo {
+  color: var(--placa-acento);
+}
+
+.crono-digito {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 1ch;
+  /* Folga para o algarismo entrar e sair sem raspar o corte da máscara. */
+  padding-block: 0.12em;
+}
+
+.crono-rolo {
+  position: relative;
+  display: block;
+}
+
+.crono-face {
+  display: block;
+}
+
+.crono-face-sai {
+  position: absolute;
+  inset: 0;
+}
+
+/* Camada primária: o disco do contador vira. O que entra sobe esticado e
+   assenta; o que sai acelera para fora. */
+@keyframes crono-entra {
+  from {
+    opacity: 0;
+    transform: translateY(108%) scaleY(1.16);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes crono-sai {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-108%) scaleY(0.88);
+  }
+}
+
+.crono-rolo[data-rola="sim"] .crono-face-entra {
+  transform-origin: 50% 100%;
+  animation: crono-entra 300ms var(--ease-saida) both;
+}
+
+.crono-rolo[data-rola="sim"] .crono-face-sai {
+  transform-origin: 50% 0;
+  animation: crono-sai 240ms var(--ease-mv) both;
+}
+
+/* Camada ambiente: a batida. Diz que o instrumento está rodando mesmo para
+   quem não está lendo os dígitos. */
+@keyframes crono-batida {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  55% {
+    opacity: 0.28;
+  }
+}
+
+.crono-batida {
+  color: color-mix(in srgb, var(--color-papel) 55%, transparent);
+  animation: crono-batida 1s ease-in-out infinite;
+}
+
+.placa[data-parado="sim"] .crono-batida {
+  animation: none;
 }
 
 .placa-dados {
@@ -522,9 +691,8 @@ body::after {
 /* ------------------------------------------------------------------
    Linha de ritmo — fecha o hero
    Traços inclinados correndo sem parar: a marcação da raia passando sob quem
-   corre. A passada verde cruza de tempos em tempos, como alguém abrindo à
-   frente. Só transform e opacity animam, e as pontas somem na máscara para a
-   repetição não denunciar a emenda.
+   corre. Só transform anima, e as pontas somem na máscara para a repetição
+   não denunciar a emenda.
 ------------------------------------------------------------------- */
 .linha-ritmo {
   --passo: 24px;
@@ -540,8 +708,7 @@ body::after {
   mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
 }
 
-.linha-ritmo::before,
-.linha-ritmo::after {
+.linha-ritmo::before {
   content: "";
   position: absolute;
   bottom: 6px;
@@ -562,38 +729,9 @@ body::after {
   animation: ritmo 820ms linear infinite;
 }
 
-/* A passada: cruza em 1,9s e descansa o resto do ciclo — movimento contínuo
-   sem duas coisas disputando atenção o tempo todo. */
-.linha-ritmo::after {
-  left: 0;
-  width: 18%;
-  background-image: linear-gradient(to right, transparent, var(--color-verde), transparent);
-  opacity: 0;
-  transform: skewX(-14deg) translateX(-100%);
-  animation: passada 6.2s var(--ease-mv) infinite;
-}
-
 @keyframes ritmo {
   to {
     transform: skewX(-14deg) translateX(var(--passo));
-  }
-}
-
-@keyframes passada {
-  0% {
-    opacity: 0;
-    transform: skewX(-14deg) translateX(-100%);
-  }
-  6% {
-    opacity: 0.9;
-  }
-  24% {
-    opacity: 0.9;
-  }
-  31%,
-  100% {
-    opacity: 0;
-    transform: skewX(-14deg) translateX(556%);
   }
 }
 
@@ -640,6 +778,40 @@ body::after {
 /* O numeral só rola depois que a placa chegou ao lugar. */
 .js .hero-conteudo .mascara > * {
   animation-delay: 230ms;
+}
+
+/* E a leitura fina só acende depois que o numeral assentou: o instrumento liga
+   de cima para baixo, e só então começa a andar. */
+@keyframes crono-acende {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.js .hero-conteudo .crono-fino {
+  animation: crono-acende 480ms var(--ease-saida) both;
+  animation-delay: 400ms;
+}
+
+/* O fio acende, não sobe: uma animação com transform apagaria o scaleX que é a
+   própria leitura dos segundos. */
+@keyframes crono-acende-fio {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.js .hero-conteudo .placa-fio-segundos {
+  animation: crono-acende-fio 480ms var(--ease-saida) both;
+  animation-delay: 470ms;
 }
 
 /* Sombra só no que fica direto sobre a foto, e curta: serve para descolar do
@@ -747,8 +919,27 @@ body::after {
   .js .hero-moveon-imagem {
     animation: none;
   }
-  .linha-ritmo::before,
-  .linha-ritmo::after {
+  /* O cronômetro continua correto, só para de se mexer: os dígitos trocam
+     secos, a batida congela e o fio de segundos vira leitura estática. */
+  .crono-rolo[data-rola="sim"] .crono-face-entra,
+  .crono-rolo[data-rola="sim"] .crono-face-sai {
+    animation: none;
+  }
+  .crono-rolo[data-rola="sim"] .crono-face-sai {
+    display: none;
+  }
+  .crono-batida {
+    animation: none;
+    opacity: 0.7;
+  }
+  .placa-fio-segundos {
+    transition: none;
+  }
+  .js .hero-conteudo .crono-fino,
+  .js .hero-conteudo .placa-fio-segundos {
+    animation: none;
+  }
+  .linha-ritmo::before {
     animation: none;
   }
   *,

@@ -3,6 +3,7 @@ import { CardEvento } from "@/components/card-evento";
 import { Vitrine } from "@/components/vitrine";
 import { Revela } from "@/components/revela";
 import { HeroExperiencia } from "@/components/hero-experiencia";
+import { Cronometro } from "@/components/cronometro";
 import { IconeSeta, IconeWhatsapp } from "@/components/icones";
 import { classesBotao } from "@/components/ui/botao";
 import { vitrine, type CartaoEvento } from "@/lib/consultas";
@@ -10,11 +11,6 @@ import { organizadorPrincipal } from "@/lib/organizador";
 import { dataCurta, etiquetaData } from "@/lib/formatos";
 
 export const revalidate = 60;
-
-function diasAte(data: Date): number {
-  const umDia = 86_400_000;
-  return Math.max(0, Math.ceil((data.getTime() - Date.now()) / umDia));
-}
 
 export default async function Home() {
   const [eventos, organizador] = await Promise.all([vitrine(), organizadorPrincipal()]);
@@ -94,10 +90,8 @@ function Hero({
     );
   }
 
-  const dias = diasAte(proxima.dataEvento);
-  const urgente = dias <= 7;
-  const eHoje = dias === 0;
   const semana = etiquetaData(proxima.dataEvento).diaSemana;
+  const restanteInicial = proxima.dataEvento.getTime() - Date.now();
 
   return (
     <HeroExperiencia>
@@ -111,28 +105,14 @@ function Hero({
           WhatsApp da organização.
         </p>
 
-        {/* A placa de largada: a contagem é a leitura do instrumento, os dados da
-            prova são as colunas ao lado. O numeral rola de trás da máscara, como
-            o dígito de um cronômetro virando. */}
-        <div className="placa mt-8 max-w-xl">
-          <p className="placa-leitura">
-            <span className="mascara">
-              <span
-                data-palavra={eHoje ? "sim" : "nao"}
-                className={`numeral placa-numeral block ${
-                  urgente ? "text-amarelo" : "text-papel"
-                }`}
-              >
-                {eHoje ? "hoje" : dias}
-              </span>
-            </span>
-            {!eHoje && (
-              <span className={`rotulo ${urgente ? "text-amarelo" : "text-papel/60"}`}>
-                {dias === 1 ? "dia" : "dias"}
-              </span>
-            )}
-          </p>
-
+        {/* A placa de largada: a contagem é a leitura do instrumento e os dados
+            da prova são as colunas ao lado. O cronômetro anda de verdade — o
+            servidor só entrega o primeiro quadro. */}
+        <Cronometro
+          alvo={proxima.dataEvento.toISOString()}
+          restanteInicial={restanteInicial}
+          className="mt-8 max-w-xl"
+        >
           <div className="placa-dados">
             <p className="placa-linha">
               <span className="rotulo text-papel/60">Largada</span>
@@ -147,7 +127,7 @@ function Hero({
               </span>
             </p>
           </div>
-        </div>
+        </Cronometro>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Link
