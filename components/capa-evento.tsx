@@ -30,7 +30,7 @@ export function CapaEvento({ url, nome, prioridade = false, className = "", size
 
   return (
     <div
-      className={`relative flex flex-col gap-2 overflow-hidden bg-papel-sombra p-4 ${className}`}
+      className={`capa-vazia relative flex flex-col gap-2 overflow-hidden p-4 ${className}`}
       role="img"
       aria-label={`${nome} — foto ainda não publicada`}
     >

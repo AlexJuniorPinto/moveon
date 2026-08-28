@@ -39,11 +39,13 @@
 
   --radius-base: 4px;
 
-  /* Movimento: uma curva só, três durações. Nada decorativo. */
+  /* Movimento — arquétipo enérgico: saída rápida, chegada macia.
+     --ease-mv para mudança de estado, --ease-saida para entrada. */
   --ease-mv: cubic-bezier(0.2, 0, 0, 1);
-  --dur-toque: 120ms;
-  --dur-estado: 200ms;
-  --dur-entrada: 320ms;
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-toque: 110ms;
+  --dur-estado: 180ms;
+  --dur-entrada: 420ms;
 }
 
 @layer base {
@@ -236,6 +238,74 @@
 }
 
 /* ------------------------------------------------------------------
+   Fita de chegada e asfalto
+   Duas texturas emprestadas da prova: a faixa listrada da chegada e as
+   raias diagonais do asfalto. Nenhuma das duas carrega imagem.
+------------------------------------------------------------------- */
+.fita {
+  height: 8px;
+  flex: none;
+  background-image: repeating-linear-gradient(
+    115deg,
+    var(--color-verde) 0 12px,
+    var(--color-asfalto) 12px 24px
+  );
+}
+
+.fita-alerta {
+  background-image: repeating-linear-gradient(
+    115deg,
+    var(--color-amarelo) 0 12px,
+    var(--color-asfalto) 12px 24px
+  );
+}
+
+.raias {
+  position: relative;
+  isolation: isolate;
+}
+
+.raias::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(
+    115deg,
+    transparent 0 46px,
+    color-mix(in srgb, var(--color-papel) 4%, transparent) 46px 47px
+  );
+  pointer-events: none;
+}
+
+/* Capa ainda sem foto: asfalto riscado em vez de um cinza chapado. */
+.capa-vazia {
+  background-color: var(--color-papel-sombra);
+  background-image: repeating-linear-gradient(
+    115deg,
+    transparent 0 34px,
+    color-mix(in srgb, var(--color-asfalto) 5%, transparent) 34px 35px
+  );
+}
+
+/* Rótulo com o traço verde na frente: dá cor ao ritmo das seções. */
+.rotulo-marcado::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  margin-right: 8px;
+  vertical-align: 0.24em;
+  background-color: var(--color-verde);
+}
+
+/* Numeral com inclinação ótica — o número de peito de quem está correndo. */
+.numeral-veloz {
+  transform: skewX(-7deg);
+  transform-origin: 0 100%;
+}
+
+/* ------------------------------------------------------------------
    Movimento — só onde comunica
 ------------------------------------------------------------------- */
 .acao {
@@ -250,24 +320,55 @@
   transform: scale(0.985);
 }
 
-@keyframes surge {
+/* Revelação ao entrar na tela. O estado escondido depende da classe `js`,
+   colocada antes da primeira pintura: sem JavaScript o conteúdo simplesmente
+   aparece, nunca fica invisível. */
+.js .revela {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.js .revela[data-revelado="sim"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-entrada) var(--ease-saida),
+    transform var(--dur-entrada) var(--ease-saida);
+  transition-delay: calc(var(--atraso, 0) * 65ms);
+}
+
+/* Entrada em máscara: o numeral sobe de trás da linha, como um marcador de
+   cronômetro virando. */
+.mascara {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+@keyframes sobe {
   from {
-    opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(105%) skewX(-7deg);
   }
   to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(0) skewX(-7deg);
   }
 }
 
-.surge {
-  animation: surge var(--dur-entrada) var(--ease-mv) both;
+.js .mascara > * {
+  animation: sobe 620ms var(--ease-saida) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .js .revela {
+    opacity: 1;
+    transform: none;
+  }
+  .js .mascara > * {
+    animation: none;
+    transform: skewX(-7deg);
   }
   *,
   *::before,

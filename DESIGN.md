@@ -5,9 +5,11 @@
 A referência não é "site de evento". É o **kit de corrida**: papel do número de
 peito, tipografia de cronômetro, cor de cone e de fita de chegada.
 
-**Elemento-assinatura:** o card da vitrine é um número de peito. Furos de
-perfuração no topo, a maior distância da prova em numerais tabulares grandes, e
-uma faixa inferior escura com a data e o preço, no lugar da tarja de patrocínio.
+**Elemento-assinatura:** o card da vitrine é um número de peito **em movimento**.
+Furos de perfuração no topo, a maior distância da prova em numerais tabulares
+inclinados 7° — como o número no peito de quem está correndo — e uma faixa
+inferior escura com a data e o preço, no lugar da tarja de patrocínio, que o
+azul preenche da esquerda para a direita quando o ponteiro passa.
 O mesmo idioma se repete no card de preço da página da prova, no resumo do
 formulário e — o momento de pagamento da jornada — na tela de confirmação, onde o
 sequencial da inscrição aparece em tamanho de peitoral.
@@ -53,27 +55,59 @@ em que um número *é* o conteúdo, não um rótulo dele.
 - Sombra: nenhuma. Separação por contraste de cor e linha de 1px.
 - Altura mínima de alvo de toque: 48px nos botões principais, 44px nos demais.
 
+## Dispositivos gráficos
+
+Três texturas emprestadas da prova, todas em CSS puro — nenhuma carrega imagem:
+
+- **Fita de chegada** (`.fita`) — faixa de 8px com listras diagonais em verde
+  sobre asfalto, fechando cada bloco escuro. É a única peça que usa verde fora
+  de um botão, e usa por ser literalmente a linha de chegada.
+- **Raias** (`.raias`) — linhas diagonais a 115° com 4% de opacidade nos blocos
+  de asfalto. Textura, não decoração: some se você olhar de perto.
+- **Traço do rótulo** (`.rotulo-marcado`) — um risco verde de 18px antes de cada
+  eyebrow, dando cor ao ritmo das seções.
+
 ## Movimento
 
-Uma curva, três durações. Nada decorativo.
+Arquétipo **enérgico**: saída rápida, chegada macia, sem quique.
 
 ```
---ease-mv:    cubic-bezier(0.2, 0, 0, 1)
---dur-toque:  120ms   pressionar
---dur-estado: 200ms   hover, cor, borda
---dur-entrada: 320ms  entrada de bloco
+--ease-mv:     cubic-bezier(0.2, 0, 0, 1)     mudança de estado
+--ease-saida:  cubic-bezier(0.16, 1, 0.3, 1)  entrada (expo.out)
+--dur-toque:   110ms   pressionar
+--dur-estado:  180ms   hover, cor, borda
+--dur-entrada: 420ms   entrada de bloco
 ```
 
 Onde há movimento e por quê:
 
 | Lugar | Movimento | Comunica |
 |---|---|---|
-| Vitrine | `scroll-snap` + inércia leve no arraste | Que dá para arrastar, e onde o card para |
+| Contagem regressiva | Sobe de trás de uma máscara, 620ms | Dígito de cronômetro virando |
+| Vitrine | `scroll-snap` + inércia no arraste | Que dá para arrastar, e onde o card para |
+| Cards e passos | Revelam em cascata de 65ms ao entrar na tela | Ordem de leitura |
+| Card em foco | Faixa preenche de azul da esquerda, numeral avança 4px, capa cresce 3% | Que ele é clicável, e que o assunto é avançar |
 | Barra de progresso | Translada com o scroll | Quanto ainda tem para o lado |
-| Botões | `scale(0.985)` ao pressionar | Que o toque foi registrado |
-| Card | Borda escurece, faixa vira azul | Que ele é clicável |
+| Botões | `scale(0.985)` ao pressionar, seta desliza no hover | Que o toque foi registrado |
 
-`prefers-reduced-motion` desliga a inércia, o scroll suave e todas as transições.
+A revelação em cascata depende da classe `js`, colocada no `<html>` antes da
+primeira pintura. Sem JavaScript o conteúdo aparece normalmente — nunca fica
+preso invisível.
+
+`prefers-reduced-motion` desliga a inércia, a cascata, a máscara e o scroll
+suave; a inclinação dos numerais fica, porque é forma, não movimento.
+
+## Rolagem
+
+A vitrine **nunca** sequestra o gesto vertical: com o cursor em cima dela, a
+página rola normalmente. Só o gesto horizontal (trackpad ou roda lateral) move
+os cards, e move de card em card.
+
+Somar pixels no `scrollLeft` a cada evento de roda brigava com o
+`scroll-snap-type: x mandatory` — o snap puxava tudo de volta para o card e o
+gesto era engolido, travando a página e a vitrine ao mesmo tempo. Por isso a
+roda salta para o card vizinho, com trava de 420ms para um gesto não pular
+vários.
 
 ## Vitrine
 

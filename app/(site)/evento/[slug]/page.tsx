@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CapaEvento } from "@/components/capa-evento";
+import { Revela } from "@/components/revela";
 import { Selo } from "@/components/ui/selo";
 import { BotaoLink, classesBotao } from "@/components/ui/botao";
 import { IconeAlerta, IconeSeta } from "@/components/icones";
@@ -52,10 +53,10 @@ export default async function PaginaEvento({
   return (
     <div className="pb-28 md:pb-0">
       {/* Capa */}
-      <section className="sobre-escuro bg-asfalto text-papel">
-        <div className="pagina grid gap-10 py-12 md:grid-cols-[1fr_280px] md:items-end md:py-16">
+      <section className="sobre-escuro raias bg-asfalto text-papel">
+        <div className="pagina grid gap-10 py-12 md:grid-cols-[1fr_280px] md:items-center md:py-16">
           <div>
-            <p className="rotulo text-papel/50">
+            <p className="rotulo rotulo-marcado text-papel/50">
               {evento.cidade} · {evento.uf}
             </p>
             <h1 className="mt-4 text-2xl md:text-3xl">{evento.nome}</h1>
@@ -93,6 +94,8 @@ export default async function PaginaEvento({
             />
           </div>
         </div>
+
+        <div className="fita" aria-hidden />
       </section>
 
       {/* Conteúdo + preço */}
@@ -124,7 +127,8 @@ export default async function PaginaEvento({
 
         <div className="flex flex-col gap-12 md:col-start-1 md:row-start-1">
           <section>
-            <h2 className="rotulo text-traco">Modalidades</h2>
+            <h2 className="rotulo rotulo-marcado text-traco">Modalidades</h2>
+            <Revela seletor="li">
             <ul className="mt-4 border-t border-asfalto/15">
               {modalidades.map((modalidade) => (
                 <li
@@ -157,6 +161,7 @@ export default async function PaginaEvento({
                 </li>
               ))}
             </ul>
+            </Revela>
           </section>
 
           <Bloco titulo="Sobre a prova" texto={evento.descricao} />
@@ -165,7 +170,7 @@ export default async function PaginaEvento({
 
           {(evento.horarioLargada || evento.retiradaKit) && (
             <section>
-              <h2 className="rotulo text-traco">Horários</h2>
+              <h2 className="rotulo rotulo-marcado text-traco">Horários</h2>
               <dl className="mt-4 grid gap-4 sm:grid-cols-2">
                 {evento.horarioLargada && (
                   <div className="border-l border-azul pl-4">
@@ -187,7 +192,9 @@ export default async function PaginaEvento({
 
       {/* Barra fixa no celular */}
       {inscricoesAbertas && lote && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-asfalto/15 bg-papel p-3 md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 bg-papel md:hidden">
+          <div className="fita" aria-hidden />
+          <div className="p-3">
           <BotaoLink
             href={`/evento/${evento.slug}/inscricao`}
             tamanho="grande"
@@ -195,6 +202,7 @@ export default async function PaginaEvento({
           >
             Fazer inscrição — {formataMoeda(lote.precoCentavos)}
           </BotaoLink>
+          </div>
         </div>
       )}
     </div>
@@ -272,8 +280,10 @@ function BlocoPreco({
     <div className="border border-asfalto/20 bg-white">
       <div className="perfuracao" aria-hidden />
       <div className="p-5">
-        <p className="rotulo text-traco">{lote.nome}</p>
-        <p className="numeral mt-2 text-2xl text-azul">{formataMoeda(lote.precoCentavos)}</p>
+        <p className="rotulo rotulo-marcado text-traco">{lote.nome}</p>
+        <p className="numeral numeral-veloz mt-3 text-2xl text-azul">
+          {formataMoeda(lote.precoCentavos)}
+        </p>
 
         <ul className="mt-4 flex flex-col gap-2 text-sm text-traco">
           {lote.fimEm && (

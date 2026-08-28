@@ -45,7 +45,22 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${display.variable} ${corpo.variable} ${dados.variable}`}>
+    <html
+      lang="pt-BR"
+      className={`${display.variable} ${corpo.variable} ${dados.variable}`}
+      // A classe `js` é acrescentada pelo script abaixo antes da hidratação.
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Marca que há JavaScript antes da primeira pintura. Sem isso, o estado
+            inicial das animações de entrada deixaria o conteúdo invisível para
+            quem estiver sem JS. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
+      </head>
       <body className="min-h-dvh bg-papel text-asfalto antialiased">{children}</body>
     </html>
   );

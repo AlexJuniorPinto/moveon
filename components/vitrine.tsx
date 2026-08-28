@@ -99,20 +99,48 @@ export function Vitrine({
     return () => observador.disconnect();
   }, [medir]);
 
-  // A roda do mouse precisa de listener não-passivo para virar scroll horizontal.
+  /**
+   * Roda do mouse e trackpad.
+   *
+   * O gesto vertical nunca é sequestrado: a página precisa continuar rolando
+   * mesmo com o cursor em cima da vitrine. Só o gesto horizontal move os cards,
+   * e move de card em card — somar pixels no scrollLeft brigava com o
+   * scroll-snap, que puxava tudo de volta e travava a rolagem.
+   */
   useEffect(() => {
     const el = trilhoRef.current;
     if (!el) return;
 
+    let travado = false;
+
     const naRoda = (evento: WheelEvent) => {
-      if (Math.abs(evento.deltaY) <= Math.abs(evento.deltaX)) return;
+      if (Math.abs(evento.deltaX) <= Math.abs(evento.deltaY)) return;
+
       const rolavel = el.scrollWidth - el.clientWidth;
       if (rolavel <= 0) return;
-      const noInicio = el.scrollLeft <= 0 && evento.deltaY < 0;
-      const noFim = el.scrollLeft >= rolavel - 1 && evento.deltaY > 0;
-      if (noInicio || noFim) return; // devolve o gesto para a página
+
+      const direcao = evento.deltaX > 0 ? 1 : -1;
+      const noLimite =
+        (direcao > 0 && el.scrollLeft >= rolavel - 1) ||
+        (direcao < 0 && el.scrollLeft <= 0);
+      if (noLimite) return; // devolve o gesto para a página
+
       evento.preventDefault();
-      el.scrollLeft += evento.deltaY;
+      if (travado) return;
+      travado = true;
+
+      const destino = Math.min(
+        el.children.length - 1,
+        Math.max(0, indiceMaisProximo(el) + direcao)
+      );
+      el.scrollTo({
+        left: destinoDoCard(el, el.children[destino] as HTMLElement),
+        behavior: prefereMenosMovimento() ? "auto" : "smooth",
+      });
+
+      setTimeout(() => {
+        travado = false;
+      }, 420);
     };
 
     el.addEventListener("wheel", naRoda, { passive: false });
@@ -266,6 +294,7 @@ export function Vitrine({
         tabIndex={0}
         aria-label={`${rotulo}. Use as setas do teclado para navegar.`}
         className="vitrine py-1"
+        style={{ cursor: podeVoltar || podeAvancar ? "grab" : "auto" }}
         onScroll={medir}
         onPointerDown={aoApontar}
         onPointerMove={aoMover}

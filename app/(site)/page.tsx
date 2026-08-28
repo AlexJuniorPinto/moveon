@@ -1,5 +1,6 @@
 import { CardEvento } from "@/components/card-evento";
 import { Vitrine } from "@/components/vitrine";
+import { Revela } from "@/components/revela";
 import { IconeSeta, IconeWhatsapp } from "@/components/icones";
 import { classesBotao } from "@/components/ui/botao";
 import { vitrine } from "@/lib/consultas";
@@ -25,11 +26,11 @@ export default async function Home() {
     <>
       <Hero proxima={proxima} whatsapp={organizador?.whatsapp ?? null} />
 
-      <section id="provas" className="ancora pt-12 md:pt-24">
+      <section id="provas" className="ancora pt-12 md:pt-20">
         <div className="pagina mb-6 flex items-end justify-between gap-6">
           <div>
-            <p className="rotulo text-traco">Vitrine</p>
-            <h2 className="mt-2 text-xl md:text-2xl">Provas abertas</h2>
+            <p className="rotulo rotulo-marcado text-traco">Vitrine</p>
+            <h2 className="mt-3 text-xl md:text-2xl">Provas abertas</h2>
           </div>
           {eventos.length > 0 && (
             <p className="dados hidden text-sm text-traco sm:block">
@@ -39,11 +40,13 @@ export default async function Home() {
         </div>
 
         {eventos.length > 0 ? (
-          <Vitrine>
-            {eventos.map((evento, indice) => (
-              <CardEvento key={evento.slug} evento={evento} prioridade={indice < 2} />
-            ))}
-          </Vitrine>
+          <Revela seletor=".vitrine > a">
+            <Vitrine>
+              {eventos.map((evento, indice) => (
+                <CardEvento key={evento.slug} evento={evento} prioridade={indice < 2} />
+              ))}
+            </Vitrine>
+          </Revela>
         ) : (
           <VitrineVazia whatsapp={organizador?.whatsapp ?? null} />
         )}
@@ -63,12 +66,10 @@ function Hero({
 }) {
   if (!proxima) {
     return (
-      <section className="sobre-escuro bg-asfalto text-papel">
+      <section className="sobre-escuro raias bg-asfalto text-papel">
         <div className="pagina py-16 md:py-24">
-          <p className="rotulo text-papel/50">MoveON</p>
-          <h1 className="mt-4 max-w-2xl text-2xl md:text-3xl">
-            Nenhuma prova aberta agora.
-          </h1>
+          <p className="rotulo rotulo-marcado text-papel/50">MoveON</p>
+          <h1 className="mt-4 max-w-2xl text-2xl md:text-3xl">Nenhuma prova aberta agora.</h1>
           <p className="mt-4 max-w-md text-papel/70">
             Siga a organização para saber da próxima. Assim que uma corrida abrir, ela
             aparece aqui.
@@ -85,6 +86,7 @@ function Hero({
             </a>
           )}
         </div>
+        <div className="fita" aria-hidden />
       </section>
     );
   }
@@ -93,15 +95,20 @@ function Hero({
   const urgente = dias <= 7;
 
   return (
-    <section className="sobre-escuro bg-asfalto text-papel">
-      <div className="pagina py-11 md:py-20">
-        <p className="rotulo text-papel/50">Próxima prova</p>
+    <section className="sobre-escuro raias bg-asfalto text-papel">
+      <div className="pagina py-11 md:py-16">
+        <p className="rotulo rotulo-marcado text-papel/50">Próxima prova</p>
 
-        <h1 className="mt-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span
-            className={`numeral text-[clamp(3.5rem,15vw,9rem)] ${urgente ? "text-amarelo" : "text-papel"}`}
-          >
-            {dias === 0 ? "hoje" : dias}
+        {/* O numeral sobe de trás da linha, como o dígito de um cronômetro virando. */}
+        <h1 className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-1 md:gap-x-8">
+          <span className="mascara">
+            <span
+              className={`numeral block text-[clamp(4rem,17vw,10rem)] ${
+                urgente ? "text-amarelo" : "text-papel"
+              }`}
+            >
+              {dias === 0 ? "hoje" : dias}
+            </span>
           </span>
           {dias > 0 && (
             <span className="font-display text-xl font-extrabold [font-stretch:125%] md:text-2xl">
@@ -110,20 +117,26 @@ function Hero({
           )}
         </h1>
 
-        <p className="mt-5 max-w-xl text-base text-papel/80 md:text-lg">
-          {dias === 0 ? "É hoje: " : dias === 1 ? "Falta um dia para a " : "Faltam para a "}
-          <strong className="font-semibold text-papel">{proxima.nome}</strong>, em{" "}
-          {proxima.cidade} · {proxima.uf}.
-        </p>
-        <p className="dados mt-2 text-sm text-papel/50 first-letter:uppercase">
-          {dataPorExtenso(proxima.dataEvento)}
-        </p>
-
-        <a href="#provas" className={`${classesBotao("avanco", "grande")} mt-7`}>
-          Ver provas abertas
-          <IconeSeta className="size-4" />
-        </a>
+        <Revela className="contents" atrasoInicial={1}>
+          <p className="mt-5 max-w-xl text-base text-papel/80 md:text-lg">
+            {dias === 0 ? "É hoje: " : dias === 1 ? "Falta um dia para a " : "Faltam para a "}
+            <strong className="font-semibold text-papel">{proxima.nome}</strong>, em{" "}
+            {proxima.cidade} · {proxima.uf}.
+          </p>
+          <p className="dados mt-2 text-sm text-papel/50 first-letter:uppercase">
+            {dataPorExtenso(proxima.dataEvento)}
+          </p>
+          <div className="mt-8">
+            <a href="#provas" className={`${classesBotao("avanco", "grande")} group`}>
+              Ver provas abertas
+              <IconeSeta className="size-4 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1" />
+            </a>
+          </div>
+        </Revela>
       </div>
+
+      {/* Fita de chegada fechando o bloco escuro. */}
+      <div className="fita" aria-hidden />
     </section>
   );
 }
@@ -170,20 +183,22 @@ const PASSOS = [
 function ComoFunciona() {
   return (
     <section className="pagina pt-20 md:pt-28">
-      <p className="rotulo text-traco">Como funciona</p>
-      <h2 className="mt-2 max-w-lg text-xl md:text-2xl">Três passos, menos de dois minutos.</h2>
+      <p className="rotulo rotulo-marcado text-traco">Como funciona</p>
+      <h2 className="mt-3 max-w-lg text-xl md:text-2xl">Três passos, menos de dois minutos.</h2>
 
-      <ol className="mt-10 grid gap-px border border-asfalto/15 bg-asfalto/15 md:grid-cols-3">
-        {PASSOS.map((passo, indice) => (
-          <li key={passo.titulo} className="bg-papel p-6 md:p-8">
-            <span className="dados text-sm text-azul">
-              {String(indice + 1).padStart(2, "0")}
-            </span>
-            <h3 className="mt-4 text-lg">{passo.titulo}</h3>
-            <p className="mt-2 text-sm text-traco">{passo.texto}</p>
-          </li>
-        ))}
-      </ol>
+      <Revela seletor="li">
+        <ol className="mt-10 grid gap-px border border-asfalto/15 bg-asfalto/15 md:grid-cols-3">
+          {PASSOS.map((passo, indice) => (
+            <li key={passo.titulo} className="group bg-papel p-6 md:p-8">
+              <span className="numeral numeral-veloz block text-2xl text-azul/25 transition-colors duration-300 group-hover:text-verde">
+                {String(indice + 1).padStart(2, "0")}
+              </span>
+              <h3 className="mt-5 text-lg">{passo.titulo}</h3>
+              <p className="mt-2 text-sm text-traco">{passo.texto}</p>
+            </li>
+          ))}
+        </ol>
+      </Revela>
     </section>
   );
 }
