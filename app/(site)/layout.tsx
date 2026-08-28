@@ -55,8 +55,7 @@ export default async function LayoutSite({ children }: { children: React.ReactNo
           <div>
             <Marca href={null} tom="escuro" />
             <p className="mt-4 max-w-sm text-sm text-papel/70">
-              Inscrições nas corridas de rua organizadas por{" "}
-              {organizador?.nome ?? "nossa equipe"}. Você preenche o formulário e finaliza o
+              Inscrições nas corridas de rua organizadas pela MoveON. Você preenche o formulário e finaliza o
               pagamento direto no WhatsApp.
             </p>
           </div>

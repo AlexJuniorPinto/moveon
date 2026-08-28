@@ -33,6 +33,7 @@ const COPIAR = [
   "lib",
   "prisma",
   "public",
+  "hero.png",
   "next.config.ts",
   "tsconfig.json",
   "postcss.config.mjs",

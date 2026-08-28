@@ -1,6 +1,7 @@
 import { CardEvento } from "@/components/card-evento";
 import { Vitrine } from "@/components/vitrine";
 import { Revela } from "@/components/revela";
+import { HeroExperiencia } from "@/components/hero-experiencia";
 import { IconeSeta, IconeWhatsapp } from "@/components/icones";
 import { classesBotao } from "@/components/ui/botao";
 import { vitrine } from "@/lib/consultas";
@@ -66,8 +67,8 @@ function Hero({
 }) {
   if (!proxima) {
     return (
-      <section className="sobre-escuro raias bg-asfalto text-papel">
-        <div className="pagina py-16 md:py-24">
+      <HeroExperiencia>
+        <div className="pagina hero-conteudo py-16 md:py-24">
           <p className="rotulo rotulo-marcado text-papel/50">MoveON</p>
           <h1 className="mt-4 max-w-2xl text-2xl md:text-3xl">Nenhuma prova aberta agora.</h1>
           <p className="mt-4 max-w-md text-papel/70">
@@ -86,8 +87,7 @@ function Hero({
             </a>
           )}
         </div>
-        <div className="fita" aria-hidden />
-      </section>
+      </HeroExperiencia>
     );
   }
 
@@ -95,8 +95,8 @@ function Hero({
   const urgente = dias <= 7;
 
   return (
-    <section className="sobre-escuro raias bg-asfalto text-papel">
-      <div className="pagina py-11 md:py-16">
+    <HeroExperiencia>
+      <div className="pagina hero-conteudo py-11 md:py-16">
         <p className="rotulo rotulo-marcado text-papel/50">Próxima prova</p>
 
         {/* O numeral sobe de trás da linha, como o dígito de um cronômetro virando. */}
@@ -134,10 +134,7 @@ function Hero({
           </div>
         </Revela>
       </div>
-
-      {/* Fita de chegada fechando o bloco escuro. */}
-      <div className="fita" aria-hidden />
-    </section>
+    </HeroExperiencia>
   );
 }
 

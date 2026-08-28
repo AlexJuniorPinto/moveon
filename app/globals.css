@@ -278,6 +278,112 @@
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------------
+   Hero MoveON
+   A fotografia toma o lugar do bloco azul. O branco acompanha o ponteiro e o
+   preto preserva a profundidade da foto; a transição curta evita uma luz dura.
+------------------------------------------------------------------- */
+.hero-moveon {
+  --luz-x: 52%;
+  --luz-y: 42%;
+  position: relative;
+  isolation: isolate;
+  min-height: min(680px, calc(100dvh - var(--altura-cabecalho)));
+  overflow: hidden;
+  background-color: var(--color-asfalto);
+}
+
+.hero-moveon-imagem {
+  z-index: -3;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-moveon::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 34rem at var(--luz-x) var(--luz-y), rgb(255 255 255 / 0.58) 0%, rgb(255 255 255 / 0.2) 25%, transparent 52%),
+    linear-gradient(112deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.35) 47%, rgb(0 0 0 / 0.58) 100%),
+    linear-gradient(to top, rgb(0 0 0 / 0.7), transparent 48%);
+  transition: background-position 180ms var(--ease-mv);
+}
+
+.hero-moveon .pagina {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes hero-entra {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.js .hero-conteudo > * {
+  animation: hero-entra 520ms var(--ease-saida) both;
+}
+
+.js .hero-conteudo > *:nth-child(2) { animation-delay: 65ms; }
+.js .hero-conteudo > *:nth-child(3) { animation-delay: 130ms; }
+.js .hero-conteudo > *:nth-child(4) { animation-delay: 195ms; }
+
+.hero-moveon h1,
+.hero-moveon p,
+.hero-moveon a {
+  text-shadow: 0 2px 24px rgb(0 0 0 / 0.42);
+}
+
+/* Uma pequena matilha de corredores substitui a antiga linha decorativa. */
+.corredores {
+  position: absolute;
+  z-index: 1;
+  right: clamp(12px, 5vw, 72px);
+  bottom: -5px;
+  display: flex;
+  align-items: end;
+  height: clamp(88px, 14vw, 154px);
+  pointer-events: none;
+}
+
+.corredor {
+  width: clamp(58px, 8vw, 104px);
+  height: auto;
+  margin-left: clamp(-20px, -2vw, -8px);
+  color: #050505;
+  fill: currentColor;
+  filter: drop-shadow(0 5px 6px rgb(255 199 102 / 0.25));
+  opacity: var(--opacidade);
+  transform: translateY(var(--deslocamento)) scale(var(--escala));
+  transform-origin: 50% 100%;
+  animation: passada 1.6s var(--ease-mv) infinite alternate;
+  animation-delay: var(--atraso-corredor);
+}
+
+@keyframes passada {
+  from { transform: translateY(calc(var(--deslocamento) + 3px)) scale(var(--escala)) rotate(-2deg); }
+  to { transform: translateY(calc(var(--deslocamento) - 4px)) scale(var(--escala)) rotate(1deg); }
+}
+
+@media (max-width: 640px) {
+  .hero-moveon {
+    min-height: 550px;
+  }
+
+  .corredores {
+    right: 4px;
+    opacity: 0.9;
+  }
+}
+
 /* Capa ainda sem foto: asfalto riscado em vez de um cinza chapado. */
 .capa-vazia {
   background-color: var(--color-papel-sombra);
@@ -369,6 +475,15 @@
   .js .mascara > * {
     animation: none;
     transform: skewX(-7deg);
+  }
+  .hero-moveon::before {
+    transition: none;
+  }
+  .js .hero-conteudo > * {
+    animation: none;
+  }
+  .corredor {
+    animation: none;
   }
   *,
   *::before,

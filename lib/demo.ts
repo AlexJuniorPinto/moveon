@@ -189,9 +189,9 @@ const PROVAS: Especificacao[] = [
 
 export const DEMO_ORGANIZADOR: DadosOrganizador = {
   id: "demo-organizador",
-  nome: "Organização Passo Firme",
+  nome: "Organização MoveON",
   whatsapp: "+5537999998888",
-  instagram: "@passofirme.corridas",
+  instagram: "@moveon.corridas",
   chavePix: null,
   tipoChavePix: null,
 };
@@ -333,7 +333,7 @@ export function demoInscricao(numero: string) {
     telefone: "+5537988887777",
     tamanhoCamisa: "M",
     modeloCamisa: "baby_look",
-    equipe: "Assessoria Passo Firme",
+    equipe: "Assessoria MoveON",
     formaPagamento: "pix",
     valorCentavos: lote?.precoCentavos ?? 6000,
     evento,

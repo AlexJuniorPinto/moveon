@@ -82,7 +82,7 @@ export default async function PaginaPrivacidade() {
           </p>
           {organizador && (
             <p className="mt-4 text-sm">
-              Para pedir, fale com {organizador.nome} no WhatsApp{" "}
+              Para pedir, fale com a MoveON no WhatsApp{" "}
               <a
                 href={`https://wa.me/${organizador.whatsapp.replace(/\D/g, "")}`}
                 target="_blank"
